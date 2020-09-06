@@ -8,12 +8,10 @@ import lombok.experimental.NonFinal;
 
 public @Value class Question {
 
-    @NonNull String id;
     @NonNull String text;
     @NonFinal List<Answer> answers = Lists.newArrayList();
 
-    public Question(@NonNull String id, @NonNull String text) {
-        this.id = id;
+    public Question(@NonNull String text) {
         this.text = text;
     }
 }

@@ -1,10 +1,10 @@
 package ru.ilpopov.otus.tester.dao.impl;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Set;
+import java.util.List;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.core.io.Resource;
@@ -22,29 +22,15 @@ public class QuestionDaoFile implements QuestionDao {
     }
 
     @Override
-    public Set<Question> getQuestions() {
+    public List<Question> getQuestions() {
         try {
-            Set<Question> questions = Sets.newHashSet();
+            List<Question> questions = Lists.newArrayList();
             Iterable<CSVRecord> csvRecords = CSVFormat.RFC4180.withAllowMissingColumnNames()
                     .withIgnoreSurroundingSpaces()
+                    .withIgnoreEmptyLines()
                     .parse(new InputStreamReader(csvResource.getInputStream()));
-            Question question = null;
-            boolean isPreviousRecordEmpty = true;
             for (CSVRecord rec : csvRecords) {
-                if (!Strings.isNullOrEmpty(rec.get(0))
-                        && !Strings.isNullOrEmpty(rec.get(1))
-                        && isPreviousRecordEmpty) {
-                    question = parseCsvRecordToQuestion(rec);
-                    questions.add(question);
-                }
-                if (question != null
-                        && !Strings.isNullOrEmpty(rec.get(0))
-                        && !Strings.isNullOrEmpty(rec.get(1))
-                        && !isPreviousRecordEmpty) {
-                    question.getAnswers()
-                            .add(parseCsvRecordToAnswer(rec));
-                }
-                isPreviousRecordEmpty = Strings.isNullOrEmpty(rec.get(0));
+                questions.add(parseQuestion(rec));
             }
             return questions;
         } catch (IOException ex) {
@@ -52,22 +38,21 @@ public class QuestionDaoFile implements QuestionDao {
         }
     }
 
-    private static Question parseCsvRecordToQuestion(CSVRecord record) {
-        Question question = null;
-        if (!Strings.isNullOrEmpty(record.get(0))
-                && record.isSet(1)) {
-            question = new Question(record.get(0), record.get(1));
-        }
+    private static Question parseQuestion(CSVRecord rec) {
+        Question question = new Question(rec.get(0));
+        question.getAnswers()
+                .addAll(parseAnswers(rec));
         return question;
     }
 
-    private static Answer parseCsvRecordToAnswer(CSVRecord record) {
-        Answer answer = null;
-        if (!Strings.isNullOrEmpty(record.get(0))
-                && record.isSet(1)) {
-            boolean isTrue = record.isSet(1) && "true".equalsIgnoreCase(record.get(1));
-            answer = new Answer(record.get(0), record.get(1), isTrue);
+    private static List<Answer> parseAnswers(CSVRecord rec) {
+        List<Answer> answers = Lists.newArrayList();
+        for (int i = 1; i < rec.size(); i++) {
+            if (!Strings.isNullOrEmpty(rec.get(i))) {
+                answers.add(new Answer(rec.get(i)));
+            }
         }
-        return answer;
+        return answers;
     }
+
 }

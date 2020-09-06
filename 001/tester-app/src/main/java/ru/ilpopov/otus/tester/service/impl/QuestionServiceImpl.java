@@ -1,15 +1,15 @@
 package ru.ilpopov.otus.tester.service.impl;
 
-import java.util.Comparator;
+import java.util.List;
+import java.util.stream.IntStream;
 import ru.ilpopov.otus.tester.dao.QuestionDao;
-import ru.ilpopov.otus.tester.model.Answer;
 import ru.ilpopov.otus.tester.model.Question;
 import ru.ilpopov.otus.tester.service.QuestionService;
 
 public class QuestionServiceImpl implements QuestionService {
 
-    private static final String QUESTION_TEMPLATE = "%s) %s?\r\n";
-    private static final String ANSWER_TEMPLATE = "    %s) %s;\r\n";
+    private static final String QUESTION_TEMPLATE = "%s) %s\r\n";
+    private static final String ANSWER_TEMPLATE = "    %s) %s\r\n";
 
     private final QuestionDao dao;
 
@@ -18,16 +18,20 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
+    public List<Question> getQuestions() {
+        return dao.getQuestions();
+    }
+
+    @Override
     public void printQuestions() {
-        dao.getQuestions()
-                .stream()
-                .sorted(Comparator.comparing(Question::getId))
-                .forEach(q -> {
-                    System.out.format(QUESTION_TEMPLATE, q.getId(), q.getText());
-                    q.getAnswers()
-                            .stream()
-                            .sorted(Comparator.comparing(Answer::getId))
-                            .forEach(a -> System.out.format(ANSWER_TEMPLATE, a.getId(), a.getText()));
+        List<Question> questions = getQuestions();
+        IntStream.range(0, questions.size())
+                .forEachOrdered(qn -> {
+                    Question question = questions.get(qn);
+                    System.out.format(QUESTION_TEMPLATE, qn + 1, question.getText());
+                    IntStream.range(0, question.getAnswers().size())
+                            .forEachOrdered(an -> System.out
+                                    .format(ANSWER_TEMPLATE, an + 1, question.getAnswers().get(an).getText()));
                 });
     }
 }
