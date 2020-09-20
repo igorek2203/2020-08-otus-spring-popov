@@ -30,7 +30,7 @@ class QuestionDaoFileTest {
 
     @Test
     public void testGetQuestions() throws IOException {
-        will(invocationOnMock -> new ByteArrayInputStream("q1,a1,a2\r\nq2,a21".getBytes()))
+        will(invocationOnMock -> new ByteArrayInputStream("q1,a1,a2,\"1,2\"\r\nq2,a21,\"1\"".getBytes()))
                 .given(csvResource).getInputStream();
         List<Question> questions = dao.getQuestions();
         assertThat(questions).hasSize(2)

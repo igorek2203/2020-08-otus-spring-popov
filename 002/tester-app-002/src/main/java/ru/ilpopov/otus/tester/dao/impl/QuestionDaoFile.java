@@ -4,9 +4,12 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import ru.ilpopov.otus.tester.dao.QuestionDao;
@@ -17,9 +20,10 @@ import ru.ilpopov.otus.tester.model.Question;
 @Component
 public class QuestionDaoFile implements QuestionDao {
 
+    private static final String RIGHT_ANSWERS_SPLITTER = ",";
     private final Resource csvResource;
 
-    public QuestionDaoFile(Resource csvResource) {
+    public QuestionDaoFile(@Value("${testerApp.questionsFilePath}") Resource csvResource) {
         this.csvResource = csvResource;
     }
 
@@ -41,7 +45,8 @@ public class QuestionDaoFile implements QuestionDao {
     }
 
     private static Question parseQuestion(CSVRecord rec) {
-        Question question = new Question(rec.get(0));
+        int rowNumber = ((Long) rec.getRecordNumber()).intValue();
+        Question question = new Question(rowNumber, rec.get(0));
         question.getAnswers()
                 .addAll(parseAnswers(rec));
         return question;
@@ -49,12 +54,17 @@ public class QuestionDaoFile implements QuestionDao {
 
     private static List<Answer> parseAnswers(CSVRecord rec) {
         List<Answer> answers = Lists.newArrayList();
-        for (int i = 1; i < rec.size(); i++) {
+        List<Integer> rightAnswers = Arrays.stream(rec.get(rec.size() - 1).split(RIGHT_ANSWERS_SPLITTER))
+                .filter(an -> !Strings.isNullOrEmpty(an))
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+        for (int i = 1; i < rec.size() - 1; i++) {
             if (!Strings.isNullOrEmpty(rec.get(i))) {
-                answers.add(new Answer(rec.get(i)));
+                answers.add(new Answer(i, rec.get(i), rightAnswers.contains(i)));
             }
         }
         return answers;
+
     }
 
 }

@@ -33,7 +33,7 @@ public class QuestionServiceImplTest {
     @DisplayName("Возвращает все вопросы с вариантами ответов")
     @Test
     public void testGetQuestions() {
-        will(invocationOnMock -> Lists.newArrayList(new Question("q1"), new Question("q2")))
+        will(invocationOnMock -> Lists.newArrayList(new Question(1, "q1"), new Question(2, "q2")))
                 .given(dao)
                 .getQuestions();
         List<Question> questions = service.getQuestions();

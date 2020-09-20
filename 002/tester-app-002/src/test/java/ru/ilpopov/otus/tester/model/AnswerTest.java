@@ -11,7 +11,7 @@ class AnswerTest {
     @DisplayName("Проверка создания конструктором")
     @Test
     public void testConstructor() {
-        Answer answer = new Answer("answer");
+        Answer answer = new Answer(1, "answer", false);
         assertEquals("answer", answer.getText());
     }
 

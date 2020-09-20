@@ -12,7 +12,7 @@ class QuestionTest {
     @DisplayName("Проверка создания конструктором")
     @Test
     public void testConstructor() {
-        Question question = new Question("question");
+        Question question = new Question(1, "question");
         assertEquals("question", question.getText());
         assertNotNull(question.getAnswers());
     }
