@@ -1,0 +1,11 @@
+${AnsiBackground.GREEN}
+  .---^---.
+ /         \
+|           |
+|           |
+ \         /
+  '_______'
+   '_____'
+    '---'
+     '-'
+${AnsiBackground.DEFAULT}
