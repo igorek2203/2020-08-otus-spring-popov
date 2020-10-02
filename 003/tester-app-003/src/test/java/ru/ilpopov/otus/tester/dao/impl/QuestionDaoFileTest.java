@@ -45,10 +45,10 @@ class QuestionDaoFileTest {
     }
 
     @MockBean
-    Resource filePath;
+    private Resource filePath;
 
     @Autowired
-    QuestionDao dao;
+    private QuestionDao dao;
 
     @DisplayName("Возвращает список вопросов")
     @Test
