@@ -1,0 +1,11 @@
+tester-app:
+  locale: ru_RU #en_US
+  questions:
+    en_US: classpath:questions_en_US.csv
+    ru_RU: classpath:questions_ru_RU.csv
+
+spring:
+  messages:
+    basename: i18n.messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
