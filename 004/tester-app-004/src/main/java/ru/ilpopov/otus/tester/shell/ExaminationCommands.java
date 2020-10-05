@@ -13,6 +13,8 @@ import ru.ilpopov.otus.tester.service.LocalizationService;
 @RequiredArgsConstructor
 public class ExaminationCommands {
 
+    private final static String LANGUAGE_MESSAGE_KEY = "lang";
+
     private final ExaminationService examinationService;
     private final LocalizationService localizationService;
     private final ApplicationProperties properties;
@@ -22,9 +24,9 @@ public class ExaminationCommands {
         examinationService.startExamination();
     }
 
-    @ShellMethod(value = "Switch language (available options ru-RU, en-US)", key = {"l", "lang"})
+    @ShellMethod(value = "Switch language (available options ru-RU, en-US)", key = {"l", "lang", "language"})
     public String changeLanguage(@ShellOption(defaultValue = "en-US") String lang) {
         properties.setLocale(Locale.forLanguageTag(lang));
-        return localizationService.getLocalizedMessage("lang");
+        return localizationService.getLocalizedMessage(LANGUAGE_MESSAGE_KEY);
     }
 }
