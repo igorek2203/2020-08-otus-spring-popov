@@ -2,7 +2,6 @@ package ru.ilpopov.otus.tester.dao.impl;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +42,7 @@ public class QuestionDaoFile implements QuestionDao {
                 questions.add(parseQuestion(rec));
             }
             return questions;
-        } catch (IOException ex) {
+        } catch (Throwable ex) {
             throw new QuestionsReadException("Error while getting questions", ex);
         }
     }
