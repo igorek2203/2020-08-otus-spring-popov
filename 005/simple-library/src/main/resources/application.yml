@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:library_db
+    initialization-mode: EMBEDDED
+    schema: classpath:database/schema.sql
+    data: classpath:database/data.sql
