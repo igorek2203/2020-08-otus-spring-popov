@@ -13,70 +13,72 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.ilpopov.otus.simple.library.dao.CrudDao;
-import ru.ilpopov.otus.simple.library.domain.Genre;
+import ru.ilpopov.otus.simple.library.dao.AuthorDao;
+import ru.ilpopov.otus.simple.library.domain.Author;
 import ru.ilpopov.otus.simple.library.exception.BookCreationException;
 import ru.ilpopov.otus.simple.library.exception.ObjectNotFound;
 
 @RequiredArgsConstructor
 @Repository
-public class GenreDaoImpl implements CrudDao<Genre> {
+public class AuthorDaoJdbc implements AuthorDao {
 
     private final NamedParameterJdbcTemplate jdbc;
 
     @Override
-    public Genre create(Genre genre) {
+    public Author create(Author author) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update("INSERT INTO GENRES(NAME, DESCRIPTION) VALUES(:name, :desc)",
+        jdbc.update("INSERT INTO AUTHORS(NAME, DESCRIPTION) VALUES(:name, :desc)",
                 new MapSqlParameterSource()
-                        .addValue("name", genre.getName())
-                        .addValue("desc", genre.getDescription()),
+                        .addValue("name", author.getName())
+                        .addValue("desc", author.getDescription()),
                 keyHolder);
         Number id = Objects.requireNonNull(keyHolder.getKey());
         return get(id.longValue())
                 .orElseThrow(
                         () -> new BookCreationException(
-                                String.format("The genre with id '%s' was not created", id)));
+                                String.format("The author with id '%s' was not created", id)));
     }
 
     @Override
-    public Optional<Genre> get(long id) {
-        return jdbc.query("SELECT g.ID, g.NAME, g.DESCRIPTION FROM GENRES g WHERE g.ID = :id",
+    public Optional<Author> get(long id) {
+        return jdbc.query("SELECT a.ID, a.NAME, a.DESCRIPTION FROM AUTHORS a WHERE a.ID = :id",
                 new MapSqlParameterSource()
                         .addValue("id", id),
-                new GenreRowMapper())
+                new AuthorRowMapper())
                 .stream()
                 .findFirst();
     }
 
     @Override
-    public Genre update(Genre genre) {
-        jdbc.update("UPDATE GENRES SET NAME = :name, DESCRIPTION = :desc WHERE ID = :id",
-                Map.of("id", genre.getId(), "name", genre.getName(), "desc", genre.getDescription()));
-        return get(genre.getId())
+    public Author update(Author author) {
+        jdbc.update("UPDATE AUTHORS SET NAME = :name, DESCRIPTION = :desc WHERE ID = :id",
+                Map.of("id", author.getId(),
+                        "name", author.getName(),
+                        "desc", author.getDescription()));
+        return get(author.getId())
                 .orElseThrow(
                         () -> new ObjectNotFound(
-                                String.format("The genre with id '%s' was found", genre.getId())));
+                                String.format("The author with id '%s' was found", author.getId())));
     }
 
     @Override
     public void delete(long id) {
-        jdbc.update("DELETE GENRES WHERE ID = :id", Map.of("id", id));
+        jdbc.update("DELETE AUTHORS WHERE ID = :id", Map.of("id", id));
     }
 
     @Override
-    public List<Genre> findByName(String name) {
-        return jdbc.query("SELECT g.ID, g.NAME, g.DESCRIPTION FROM GENRES g WHERE g.NAME = :name",
+    public List<Author> findByName(String name) {
+        return jdbc.query("SELECT a.ID, a.NAME, a.DESCRIPTION FROM AUTHORS a WHERE a.NAME = :name",
                 new MapSqlParameterSource()
                         .addValue("name", name),
-                new GenreRowMapper());
+                new AuthorRowMapper());
     }
 
-    static class GenreRowMapper implements RowMapper<Genre> {
+    private static class AuthorRowMapper implements RowMapper<Author> {
 
         @Override
-        public Genre mapRow(ResultSet record, int rowNum) throws SQLException {
-            return new Genre(record.getLong("ID"), record.getString("NAME"), record.getString("DESCRIPTION"));
+        public Author mapRow(ResultSet record, int rowNum) throws SQLException {
+            return new Author(record.getLong("ID"), record.getString("NAME"), record.getString("DESCRIPTION"));
         }
     }
 }
