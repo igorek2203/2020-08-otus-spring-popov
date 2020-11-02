@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.ilpopov.otus.simple.library.dao.CrudDao;
+import ru.ilpopov.otus.simple.library.dao.AuthorDao;
 import ru.ilpopov.otus.simple.library.domain.Author;
 import ru.ilpopov.otus.simple.library.service.CrudService;
 
@@ -12,7 +12,7 @@ import ru.ilpopov.otus.simple.library.service.CrudService;
 @Service
 public class AuthorServiceImpl implements CrudService<Author> {
 
-    private final CrudDao<Author> authorDao;
+    private final AuthorDao authorDao;
 
     @Override
     public Author create(Author author) {

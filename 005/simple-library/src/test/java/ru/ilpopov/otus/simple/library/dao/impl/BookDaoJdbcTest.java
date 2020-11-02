@@ -200,6 +200,7 @@ class BookDaoJdbcTest {
         assertThat(authorsCount).isEqualTo(0);
     }
 
+    @DisplayName("Найдет книги по имени")
     @Test
     void findByName() {
         List<Book> books = bookDao.findByName("Книга 1");
@@ -208,6 +209,7 @@ class BookDaoJdbcTest {
                 .contains("Книга 1");
     }
 
+    @DisplayName("Найдет книги по имени ее автора")
     @Test
     void findByAuthorName() {
         List<Book> books = bookDao.findByAuthorName("Автор 1");
@@ -216,6 +218,7 @@ class BookDaoJdbcTest {
                 .contains("Книга 1");
     }
 
+    @DisplayName("Найдет книги по названию жанра")
     @Test
     void findByGenreName() {
         List<Book> books = bookDao.findByGenreName("Жанр 1");

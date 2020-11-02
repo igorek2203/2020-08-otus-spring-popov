@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.ilpopov.otus.simple.library.dao.CrudDao;
+import ru.ilpopov.otus.simple.library.dao.GenreDao;
 import ru.ilpopov.otus.simple.library.domain.Genre;
 import ru.ilpopov.otus.simple.library.service.CrudService;
 
@@ -12,7 +12,7 @@ import ru.ilpopov.otus.simple.library.service.CrudService;
 @Service
 public class GenreServiceImpl implements CrudService<Genre> {
 
-    private final CrudDao<Genre> genreDao;
+    private final GenreDao genreDao;
 
     @Override
     public Genre create(Genre genre) {
