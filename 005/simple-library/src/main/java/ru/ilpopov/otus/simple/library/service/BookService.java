@@ -5,21 +5,26 @@ import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
+import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.domain.validation.Insert;
 import ru.ilpopov.otus.simple.library.domain.validation.Update;
 
 @Validated
-public interface CrudService<T> {
+public interface BookService {
 
     @Validated(Insert.class)
-    T create(@Valid @NotNull T entity);
+    Book create(@Valid @NotNull Book book);
 
-    Optional<T> get(long id);
+    Optional<Book> get(long id);
 
     @Validated(Update.class)
-    T update(@Valid @NotNull T entity);
+    Book update(@Valid @NotNull Book book);
 
     void delete(long id);
 
-    List<T> findByName(@NotNull String name);
+    List<Book> findByName(@NotNull String name);
+
+    List<Book> findByAuthorName(@NotNull String name);
+
+    List<Book> findByGenreName(@NotNull String name);
 }

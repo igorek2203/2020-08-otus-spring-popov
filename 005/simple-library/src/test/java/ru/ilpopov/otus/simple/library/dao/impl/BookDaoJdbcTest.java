@@ -39,7 +39,7 @@ class BookDaoJdbcTest {
                 .hasMessage("The author 'NotExisted' must be existed before the book");
     }
 
-    @DisplayName("Вернет исключение при создании книги с автором, который еще не создан")
+    @DisplayName("Исключение при создании книги с автором, который еще не создан")
     @Test
     void createBookWithGenreThatDoesNotExists() {
         Book newBook = new Book("Test creation");

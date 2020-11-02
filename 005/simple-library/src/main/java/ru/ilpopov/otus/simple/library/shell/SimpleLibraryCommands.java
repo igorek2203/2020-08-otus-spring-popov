@@ -13,16 +13,18 @@ import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.domain.Genre;
 import ru.ilpopov.otus.simple.library.exception.BookModificationException;
 import ru.ilpopov.otus.simple.library.exception.ObjectNotFound;
-import ru.ilpopov.otus.simple.library.service.CrudService;
+import ru.ilpopov.otus.simple.library.service.AuthorService;
+import ru.ilpopov.otus.simple.library.service.BookService;
+import ru.ilpopov.otus.simple.library.service.GenreService;
 import ru.ilpopov.otus.simple.library.service.StringIOService;
 
 @RequiredArgsConstructor
 @ShellComponent
 public class SimpleLibraryCommands {
 
-    private final CrudService<Book> bookService;
-    private final CrudService<Genre> genreService;
-    private final CrudService<Author> authorService;
+    private final BookService bookService;
+    private final GenreService genreService;
+    private final AuthorService authorService;
     private final StringIOService stringIOService;
 
     @ShellMethod(value = "Create a new book", key = {"new-book"})

@@ -6,11 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.ilpopov.otus.simple.library.dao.GenreDao;
 import ru.ilpopov.otus.simple.library.domain.Genre;
-import ru.ilpopov.otus.simple.library.service.CrudService;
+import ru.ilpopov.otus.simple.library.service.GenreService;
 
 @RequiredArgsConstructor
 @Service
-public class GenreServiceImpl implements CrudService<Genre> {
+public class GenreServiceImpl implements GenreService {
 
     private final GenreDao genreDao;
 

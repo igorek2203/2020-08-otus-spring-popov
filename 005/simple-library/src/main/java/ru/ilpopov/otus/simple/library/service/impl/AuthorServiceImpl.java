@@ -6,11 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.ilpopov.otus.simple.library.dao.AuthorDao;
 import ru.ilpopov.otus.simple.library.domain.Author;
-import ru.ilpopov.otus.simple.library.service.CrudService;
+import ru.ilpopov.otus.simple.library.service.AuthorService;
 
 @RequiredArgsConstructor
 @Service
-public class AuthorServiceImpl implements CrudService<Author> {
+public class AuthorServiceImpl implements AuthorService {
 
     private final AuthorDao authorDao;
 

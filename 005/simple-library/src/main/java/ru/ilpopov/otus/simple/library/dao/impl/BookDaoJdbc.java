@@ -77,7 +77,7 @@ public class BookDaoJdbc implements BookDao {
 
     private void updateBookAuthorsRelations(Book oldBook, Book book) {
         List<Long> newAuthorIds = book.getAuthors().stream()
-                .map(this::extractAuthorId)
+                .map(this::resolveAuthorId)
                 .collect(Collectors.toList());
         List<Long> oldAuthorIds = oldBook.getAuthors().stream()
                 .map(Author::getId)
@@ -93,7 +93,7 @@ public class BookDaoJdbc implements BookDao {
 
     private void updateBookGenresRelations(Book oldBook, Book book) {
         List<Long> newGenreIds = book.getGenres().stream()
-                .map(this::extractGenreId)
+                .map(this::resolveGenreId)
                 .collect(Collectors.toList());
         List<Long> oldGenreIds = oldBook.getGenres().stream()
                 .map(Genre::getId)
@@ -153,11 +153,11 @@ public class BookDaoJdbc implements BookDao {
     private void createBookAuthorsRelations(Book book) {
         book.getAuthors()
                 .stream()
-                .map(this::extractAuthorId)
+                .map(this::resolveAuthorId)
                 .forEach(authorId -> relateAuthor(book.getId(), authorId));
     }
 
-    private Long extractAuthorId(Author a) {
+    private Long resolveAuthorId(Author a) {
         return Optional.ofNullable(a.getId())
                 .orElseGet(() -> authorDao.findByName(a.getName())
                         .stream()
@@ -170,11 +170,11 @@ public class BookDaoJdbc implements BookDao {
     private void createBookGenresRelations(Book book) {
         book.getGenres()
                 .stream()
-                .map(this::extractGenreId)
+                .map(this::resolveGenreId)
                 .forEach(genreId -> relateGenre(book.getId(), genreId));
     }
 
-    private Long extractGenreId(Genre g) {
+    private Long resolveGenreId(Genre g) {
         return Optional.ofNullable(g.getId())
                 .orElseGet(() -> genreDao.findByName(g.getName())
                         .stream()
