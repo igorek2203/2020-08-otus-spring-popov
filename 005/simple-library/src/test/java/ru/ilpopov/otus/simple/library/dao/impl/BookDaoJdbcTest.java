@@ -28,7 +28,7 @@ class BookDaoJdbcTest {
     @Autowired
     private NamedParameterJdbcTemplate jdbc;
 
-    @DisplayName("Вернет исключение при создании книги с автором, который еще не создан")
+    @DisplayName("Исключение при создании книги с автором, который еще не создан")
     @Test
     void createBookWithAuthorWhoDoesNotExists() {
         Book newBook = new Book("Test creation");
@@ -39,7 +39,7 @@ class BookDaoJdbcTest {
                 .hasMessage("The author 'NotExisted' must be existed before the book");
     }
 
-    @DisplayName("Исключение при создании книги с автором, который еще не создан")
+    @DisplayName("Исключение при создании книги с жанром, который еще не создан")
     @Test
     void createBookWithGenreThatDoesNotExists() {
         Book newBook = new Book("Test creation");
@@ -148,7 +148,7 @@ class BookDaoJdbcTest {
                 .containsOnly("Автор 3", "Автор 2");
     }
 
-    @DisplayName("Удалит все один старый жанр из книги и добавит один новый")
+    @DisplayName("Удалит один старый жанр из книги и добавит один новый")
     @Test
     void updateBookChangeGenres() {
         Book newBook = new Book("Test update");
