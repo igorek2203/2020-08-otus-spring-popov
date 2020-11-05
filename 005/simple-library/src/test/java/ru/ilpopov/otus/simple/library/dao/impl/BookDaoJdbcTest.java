@@ -130,18 +130,18 @@ class BookDaoJdbcTest {
     @DisplayName("Удалит одного старого автора из книги и добавит одного нового")
     @Test
     void updateBookChangeAuthors() {
-        Book newBook = new Book("Test update");
+        Book newBook = new Book("Test create");
         newBook.setAuthors(List.of(new Author("Автор 1"), new Author("Автор 2")));
         Book createdBook = bookDao.create(newBook);
 
-        createdBook.setName("Test Updated");
+        createdBook.setName("Test updated");
         createdBook.setAuthors(List.of(new Author("Автор 3"), new Author("Автор 2")));
 
         Book updatedBook = bookDao.update(createdBook);
 
         assertThat(updatedBook)
                 .extracting(Book::getName)
-                .isEqualTo("Test Updated");
+                .isEqualTo("Test updated");
 
         assertThat(updatedBook.getAuthors())
                 .flatExtracting(Author::getName)
