@@ -15,6 +15,7 @@ import ru.ilpopov.otus.simple.library.exception.BookModificationException;
 import ru.ilpopov.otus.simple.library.exception.ObjectNotFound;
 import ru.ilpopov.otus.simple.library.service.AuthorService;
 import ru.ilpopov.otus.simple.library.service.BookService;
+import ru.ilpopov.otus.simple.library.service.FormatterService;
 import ru.ilpopov.otus.simple.library.service.GenreService;
 import ru.ilpopov.otus.simple.library.service.StringIOService;
 
@@ -26,6 +27,7 @@ public class SimpleLibraryCommands {
     private final GenreService genreService;
     private final AuthorService authorService;
     private final StringIOService stringIOService;
+    private final FormatterService<Book> bookFormatter;
 
     @ShellMethod(value = "Create a new book", key = {"book-new"})
     public void createBook(
@@ -59,13 +61,18 @@ public class SimpleLibraryCommands {
         book.getAuthors().addAll(authorList);
         book.getGenres().addAll(genreList);
         Book createdBook = bookService.create(book);
-        stringIOService.writeln(String.format("Created book %s", createdBook));
+        stringIOService.writeln("Book created");
+        stringIOService.writeln(bookFormatter.formatToString(createdBook));
     }
 
     @ShellMethod(value = "Find books by name", key = {"book-find"})
     public void findBookByName(@ShellOption String bookName) {
         bookService.findByName(bookName)
-                .forEach(b -> stringIOService.writeln(String.format("The book %s", b)));
+                .forEach(b -> {
+                    stringIOService.writeln("----------------------------------");
+                    stringIOService.writeln(bookFormatter.formatToString(b));
+                    stringIOService.writeln("");
+                });
     }
 
     @ShellMethod(value = "Modify the book", key = {"book-modify"})
@@ -73,7 +80,7 @@ public class SimpleLibraryCommands {
             @ShellOption(value = "--id", help = "The book id") Long bookId,
             @ShellOption(value = "--field", help = "Field name") String fieldName,
             @ShellOption(value = "--value", help = "New Value") String fieldValue) {
-        Book newBook = bookService.get(bookId)
+        Book updatedBook = bookService.get(bookId)
                 .map(b -> {
                     switch (fieldName) {
                         case "name":
@@ -86,7 +93,8 @@ public class SimpleLibraryCommands {
                 })
                 .map(bookService::update)
                 .orElseThrow(() -> new BookModificationException("The book was not found"));
-        stringIOService.writeln(String.format("Updated book %s", newBook));
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
     }
 
     @ShellMethod(value = "Associate an existed author with a book", key = {"book-add-author"})
@@ -105,7 +113,8 @@ public class SimpleLibraryCommands {
                 })
                 .map(bookService::update)
                 .orElseThrow(() -> new BookModificationException("Can't modify the book"));
-        stringIOService.writeln(String.format("Updated book %s", updatedBook));
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
     }
 
     @ShellMethod(value = "Dissociate an existed author with a book", key = {"book-remove-author"})
@@ -120,7 +129,8 @@ public class SimpleLibraryCommands {
                 })
                 .map(bookService::update)
                 .orElseThrow(() -> new BookModificationException("Can't modify the book"));
-        stringIOService.writeln(String.format("Updated book %s", updatedBook));
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
     }
 
     @ShellMethod(value = "Associate an existed genre with a book", key = {"book-add-genre"})
@@ -139,7 +149,8 @@ public class SimpleLibraryCommands {
                 })
                 .map(bookService::update)
                 .orElseThrow(() -> new BookModificationException("Can't modify the book"));
-        stringIOService.writeln(String.format("Updated book %s", updatedBook));
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
     }
 
     @ShellMethod(value = "Dissociate an existed genre with a book", key = {"book-remove-genre"})
@@ -154,7 +165,8 @@ public class SimpleLibraryCommands {
                 })
                 .map(bookService::update)
                 .orElseThrow(() -> new BookModificationException("Can't modify the book"));
-        stringIOService.writeln(String.format("Updated book %s", updatedBook));
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
     }
 
     @ShellMethod(value = "Delete the book by id", key = {"book-delete"})
