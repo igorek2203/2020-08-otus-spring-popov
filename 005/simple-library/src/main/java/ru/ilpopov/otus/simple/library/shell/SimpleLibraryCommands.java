@@ -27,18 +27,18 @@ public class SimpleLibraryCommands {
     private final AuthorService authorService;
     private final StringIOService stringIOService;
 
-    @ShellMethod(value = "Create a new book", key = {"new-book"})
+    @ShellMethod(value = "Create a new book", key = {"book-new"})
     public void createBook(
             @ShellOption(value = "--name", help = "Book name")
                     String bookName,
-            @ShellOption(value = "--desc", help = "Book description")
+            @ShellOption(value = "--desc", defaultValue = "", help = "Book description")
                     String bookDescription,
             @ShellOption(value = {"-A", "--author"},
-                    defaultValue = "Unknown",
+                    defaultValue = "Неизвестный автор",
                     help = "Author name. Split Authors by comma.")
                     String authors,
             @ShellOption(value = {"-G", "--genre"},
-                    defaultValue = "Unknown",
+                    defaultValue = "Неизвестный жанр",
                     help = "Genre name. Split genres by comma.")
                     String genres) {
 
@@ -62,13 +62,13 @@ public class SimpleLibraryCommands {
         stringIOService.writeln(String.format("Created book %s", createdBook));
     }
 
-    @ShellMethod(value = "Find books by name", key = {"find-book"})
+    @ShellMethod(value = "Find books by name", key = {"book-find"})
     public void findBookByName(@ShellOption String bookName) {
         bookService.findByName(bookName)
                 .forEach(b -> stringIOService.writeln(String.format("The book %s", b)));
     }
 
-    @ShellMethod(value = "Modify the book", key = {"modify-book"})
+    @ShellMethod(value = "Modify the book", key = {"book-modify"})
     public void modifyBook(
             @ShellOption(value = "--id", help = "The book id") Long bookId,
             @ShellOption(value = "--field", help = "Field name") String fieldName,
@@ -157,7 +157,7 @@ public class SimpleLibraryCommands {
         stringIOService.writeln(String.format("Updated book %s", updatedBook));
     }
 
-    @ShellMethod(value = "Delete the book by id", key = {"del-book"})
+    @ShellMethod(value = "Delete the book by id", key = {"book-delete"})
     public void deleteBook(@ShellOption long id) {
         bookService.delete(id);
         stringIOService.writeln("The book deleted");
