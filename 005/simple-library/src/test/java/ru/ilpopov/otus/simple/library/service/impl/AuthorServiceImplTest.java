@@ -41,13 +41,13 @@ class AuthorServiceImplTest {
         given(dao.create(any(Author.class)))
                 .will((invocationOnMock) -> {
                     Author input = invocationOnMock.getArgument(0);
-                    return new Author(1L, input.getName(), input.getDescription());
+                    return new Author(1L, input.getFullName(), input.getDescription());
                 });
 
         given(dao.update(any(Author.class)))
                 .will((invocationOnMock) -> {
                     Author input = invocationOnMock.getArgument(0);
-                    return new Author(1L, input.getName(), input.getDescription());
+                    return new Author(1L, input.getFullName(), input.getDescription());
                 });
     }
 
@@ -57,7 +57,7 @@ class AuthorServiceImplTest {
         Author author = new Author("Test create");
 
         assertThat(service.create(author))
-                .extracting(Author::getName)
+                .extracting(Author::getFullName)
                 .isEqualTo("Test create");
 
         ArgumentCaptor<Author> authorArgumentCaptor = ArgumentCaptor.forClass(Author.class);
@@ -71,11 +71,11 @@ class AuthorServiceImplTest {
     @Test
     void createAuthorNameConstraintValidationException() {
         Author author = new Author("Test create");
-        author.setName(null);
+        author.setFullName(null);
 
         assertThatThrownBy(() -> service.create(author))
                 .isInstanceOf(ConstraintViolationException.class)
-                .hasMessage("create.author.name: name must be set");
+                .hasMessage("create.author.fullName: name must be set");
 
         verify(dao, never()).create(author);
     }
@@ -83,16 +83,16 @@ class AuthorServiceImplTest {
     @DisplayName("Вернет одного автора по заданному идентификатору")
     @Test
     void getByIdSuccess() {
-        given(dao.get(1L))
+        given(dao.getOptional(1L))
                 .willReturn(Optional.of(new Author(1L, "Test get")));
 
         assertThat(service.get(1L))
                 .isNotEmpty()
                 .get()
-                .extracting(Author::getName)
+                .extracting(Author::getFullName)
                 .isEqualTo("Test get");
 
-        verify(dao, only()).get(1L);
+        verify(dao, only()).getOptional(1L);
     }
 
     @DisplayName("Вернет пустой Optional т.к. автор с заданным идентификатором не создан")
@@ -101,7 +101,7 @@ class AuthorServiceImplTest {
         assertThat(service.get(1L))
                 .isEmpty();
 
-        verify(dao, only()).get(1L);
+        verify(dao, only()).getOptional(1L);
     }
 
     @DisplayName("Изменит автора и вернет его")
@@ -110,7 +110,7 @@ class AuthorServiceImplTest {
         Author author = new Author(1L, "Test update");
 
         assertThat(service.update(author))
-                .extracting(Author::getName)
+                .extracting(Author::getFullName)
                 .isEqualTo("Test update");
 
         verify(dao, only()).update(author);
@@ -133,13 +133,13 @@ class AuthorServiceImplTest {
     void deleteAuthor() {
         service.delete(1L);
 
-        verify(dao, only()).delete(1L);
+        verify(dao, only()).deleteById(1L);
     }
 
     @DisplayName("Найдет авторов по имени")
     @Test
     void findByName() {
-        given(dao.findByName(anyString()))
+        given(dao.findByFullName(anyString()))
                 .will((invocationOnMock) -> {
                     String name = invocationOnMock.getArgument(0);
                     return List.of(new Author(1L, name),
@@ -148,9 +148,9 @@ class AuthorServiceImplTest {
 
         assertThat(service.findByName("test search"))
                 .hasSize(2)
-                .flatExtracting(Author::getName)
+                .flatExtracting(Author::getFullName)
                 .containsOnly("test search");
 
-        verify(dao, only()).findByName("test search");
+        verify(dao, only()).findByFullName("test search");
     }
 }

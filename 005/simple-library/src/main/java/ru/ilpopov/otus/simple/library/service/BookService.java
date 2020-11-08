@@ -22,9 +22,9 @@ public interface BookService {
 
     void delete(long id);
 
-    List<Book> findByName(@NotNull String name);
+    List<Book> findByTitle(@NotNull String title);
 
-    List<Book> findByAuthorName(@NotNull String name);
+    List<Book> findByAuthorFullName(@NotNull String fullName);
 
     List<Book> findByGenreName(@NotNull String name);
 }

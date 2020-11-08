@@ -35,7 +35,7 @@ class GenreDaoJdbcTest {
     @DisplayName("Вычитает из БД жанр по идентификатору")
     @Test
     void get() {
-        assertThat(genreDao.get(1L).get())
+        assertThat(genreDao.getOptional(1L)).get()
                 .extracting(Genre::getName)
                 .isEqualTo("Жанр 1");
     }
@@ -43,7 +43,7 @@ class GenreDaoJdbcTest {
     @DisplayName("Переименует жанр")
     @Test
     void update() {
-        Genre genre = genreDao.get(1L).get();
+        Genre genre = genreDao.getOptional(1L).get();
         genre.setName("Test update");
         assertThat(genreDao.update(genre))
                 .extracting(Genre::getName)
@@ -54,7 +54,7 @@ class GenreDaoJdbcTest {
     @Test
     void delete() {
         long deleteId = 4L;
-        genreDao.delete(deleteId);
+        genreDao.deleteById(deleteId);
 
         Long count = jdbc.queryForObject(
                 "SELECT COUNT(g.*) FROM GENRES g WHERE g.ID = :id",

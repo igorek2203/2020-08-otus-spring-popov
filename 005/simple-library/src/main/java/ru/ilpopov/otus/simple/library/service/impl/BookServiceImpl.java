@@ -22,7 +22,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Optional<Book> get(long id) {
-        return bookDao.get(id);
+        return bookDao.getOptional(id);
     }
 
     @Override
@@ -32,17 +32,17 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public void delete(long id) {
-        bookDao.delete(id);
+        bookDao.deleteById(id);
     }
 
     @Override
-    public List<Book> findByName(String name) {
-        return bookDao.findByName(name);
+    public List<Book> findByTitle(String title) {
+        return bookDao.findByTitle(title);
     }
 
     @Override
-    public List<Book> findByAuthorName(@NotNull String name) {
-        return bookDao.findByAuthorName(name);
+    public List<Book> findByAuthorFullName(@NotNull String fullName) {
+        return bookDao.findByAuthorFullName(fullName);
     }
 
     @Override

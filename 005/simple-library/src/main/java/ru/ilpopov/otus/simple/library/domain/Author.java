@@ -1,25 +1,30 @@
 package ru.ilpopov.otus.simple.library.domain;
 
-import lombok.EqualsAndHashCode;
+import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import ru.ilpopov.otus.simple.library.domain.validation.Insert;
+import ru.ilpopov.otus.simple.library.domain.validation.Update;
 
-@EqualsAndHashCode(callSuper = true)
-public class Author extends AbstractModel {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Author {
 
-    public Author(Long id, String name) {
-        super(id, name);
+    @NotNull(groups = {Update.class}, message = "id must be set")
+    private Long id;
+
+    @NotNull(groups = {Insert.class, Update.class}, message = "name must be set")
+    private String fullName;
+
+    private String description;
+
+    public Author(Long id, String fullName) {
+        this(id, fullName, null);
     }
 
-    public Author(String name) {
-        super(name);
-    }
-
-    public Author(Long id, String name, String description) {
-        super(id, name, description);
-    }
-
-    @Override
-    public String toString() {
-        return super.toStringHelper()
-                .toString();
+    public Author(String fullName) {
+        this(null, fullName);
     }
 }

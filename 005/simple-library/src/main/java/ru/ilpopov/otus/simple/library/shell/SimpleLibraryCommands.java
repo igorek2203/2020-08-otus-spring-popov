@@ -2,6 +2,7 @@ package ru.ilpopov.otus.simple.library.shell;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -65,14 +66,39 @@ public class SimpleLibraryCommands {
         stringIOService.writeln(bookFormatter.formatToString(createdBook));
     }
 
-    @ShellMethod(value = "Find books by name", key = {"book-find"})
-    public void findBookByName(@ShellOption String bookName) {
-        bookService.findByName(bookName)
-                .forEach(b -> {
-                    stringIOService.writeln("----------------------------------");
-                    stringIOService.writeln(bookFormatter.formatToString(b));
-                    stringIOService.writeln("");
-                });
+    @ShellMethod(value = "Find books by title", key = {"book-find"})
+    public void findBooksByName(
+            @ShellOption(value = "--title", defaultValue = "", help = "Book title") String bookTitle,
+            @ShellOption(value = "-A", defaultValue = "", help = "Author full name") String authorFullName,
+            @ShellOption(value = "-G", defaultValue = "", help = "Genre name") String genreName
+    ) {
+        List<Book> books = new ArrayList<>();
+        if (!Strings.isNullOrEmpty(bookTitle)) {
+            bookService.findByTitle(bookTitle)
+                    .stream()
+                    .filter(b -> !books.contains(b))
+                    .forEach(books::add);
+        }
+        if (!Strings.isNullOrEmpty(authorFullName)) {
+            bookService.findByAuthorFullName(authorFullName)
+                    .stream()
+                    .filter(b -> !books.contains(b))
+                    .forEach(books::add);
+        }
+        if (!Strings.isNullOrEmpty(genreName)) {
+            bookService.findByGenreName(genreName)
+                    .stream()
+                    .filter(b -> !books.contains(b))
+                    .forEach(books::add);
+        }
+
+        stringIOService.writeln("----------------------------------");
+        stringIOService.writeln(String.format("Books found: %s", books.size()));
+        books.forEach(b -> {
+            stringIOService.writeln("----------------------------------");
+            stringIOService.writeln(bookFormatter.formatToString(b));
+            stringIOService.writeln("");
+        });
     }
 
     @ShellMethod(value = "Modify the book", key = {"book-modify"})
@@ -84,7 +110,7 @@ public class SimpleLibraryCommands {
                 .map(b -> {
                     switch (fieldName) {
                         case "name":
-                            b.setName(fieldValue);
+                            b.setTitle(fieldValue);
                             break;
                         case "description":
                             b.setDescription(fieldValue);
@@ -99,7 +125,7 @@ public class SimpleLibraryCommands {
 
     @ShellMethod(value = "Associate an existed author with a book", key = {"book-add-author"})
     public void bookAddAuthor(
-            @ShellOption(value = "--id", help = "A book identifier") Long bookId,
+            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
             @ShellOption(value = "--author", help = "An author name") String authorName) {
         List<Author> authors = authorService.findByName(authorName);
         if (authors.isEmpty()) {
@@ -119,12 +145,12 @@ public class SimpleLibraryCommands {
 
     @ShellMethod(value = "Dissociate an existed author with a book", key = {"book-remove-author"})
     public void bookRemoveAuthor(
-            @ShellOption(value = "--id", help = "A book identifier") Long bookId,
+            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
             @ShellOption(value = "--author", help = "An author name") String authorName) {
         Book updatedBook = bookService.get(bookId)
                 .map(book -> {
                     book.getAuthors()
-                            .removeIf(a -> a.getName().equalsIgnoreCase(authorName));
+                            .removeIf(a -> a.getFullName().equalsIgnoreCase(authorName));
                     return book;
                 })
                 .map(bookService::update)
@@ -135,7 +161,7 @@ public class SimpleLibraryCommands {
 
     @ShellMethod(value = "Associate an existed genre with a book", key = {"book-add-genre"})
     public void bookAddGenre(
-            @ShellOption(value = "--id", help = "A book identifier") Long bookId,
+            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
             @ShellOption(value = "--genre", help = "An genre name") String genreName) {
         List<Genre> genres = genreService.findByName(genreName);
         if (genres.isEmpty()) {
@@ -155,7 +181,7 @@ public class SimpleLibraryCommands {
 
     @ShellMethod(value = "Dissociate an existed genre with a book", key = {"book-remove-genre"})
     public void bookRemoveGenre(
-            @ShellOption(value = "--id", help = "A book identifier") Long bookId,
+            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
             @ShellOption(value = "--genre", help = "An genre name") String genreName) {
         Book updatedBook = bookService.get(bookId)
                 .map(book -> {

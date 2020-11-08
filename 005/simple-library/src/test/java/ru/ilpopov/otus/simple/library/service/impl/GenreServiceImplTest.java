@@ -41,13 +41,13 @@ class GenreServiceImplTest {
         given(dao.create(any(Genre.class)))
                 .will((invocationOnMock) -> {
                     Genre input = invocationOnMock.getArgument(0);
-                    return new Genre(1L, input.getName(), input.getDescription());
+                    return new Genre(1L, input.getName());
                 });
 
         given(dao.update(any(Genre.class)))
                 .will((invocationOnMock) -> {
                     Genre input = invocationOnMock.getArgument(0);
-                    return new Genre(1L, input.getName(), input.getDescription());
+                    return new Genre(1L, input.getName());
                 });
     }
 
@@ -83,7 +83,7 @@ class GenreServiceImplTest {
     @DisplayName("Вернет однин жанр по заданному идентификатору")
     @Test
     void getByIdSuccess() {
-        given(dao.get(1L))
+        given(dao.getOptional(1L))
                 .willReturn(Optional.of(new Genre(1L, "Test get")));
 
         assertThat(service.get(1L))
@@ -92,7 +92,7 @@ class GenreServiceImplTest {
                 .extracting(Genre::getName)
                 .isEqualTo("Test get");
 
-        verify(dao, only()).get(1L);
+        verify(dao, only()).getOptional(1L);
     }
 
     @DisplayName("Вернет пустой Optional т.к. жанр с заданным идентификатором не создан")
@@ -101,7 +101,7 @@ class GenreServiceImplTest {
         assertThat(service.get(1L))
                 .isEmpty();
 
-        verify(dao, only()).get(1L);
+        verify(dao, only()).getOptional(1L);
     }
 
     @DisplayName("Изменит жанр и вернет его")
@@ -133,7 +133,7 @@ class GenreServiceImplTest {
     void deleteAuthor() {
         service.delete(1L);
 
-        verify(dao, only()).delete(1L);
+        verify(dao, only()).deleteById(1L);
     }
 
     @DisplayName("Найдет жанры по имени")

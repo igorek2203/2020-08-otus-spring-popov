@@ -41,13 +41,13 @@ class BookServiceImplTest {
         given(dao.create(any(Book.class)))
                 .will((invocationOnMock) -> {
                     Book input = invocationOnMock.getArgument(0);
-                    return new Book(1L, input.getName(), input.getDescription());
+                    return new Book(1L, input.getTitle(), input.getDescription());
                 });
 
         given(dao.update(any(Book.class)))
                 .will((invocationOnMock) -> {
                     Book input = invocationOnMock.getArgument(0);
-                    return new Book(1L, input.getName(), input.getDescription());
+                    return new Book(1L, input.getTitle(), input.getDescription());
                 });
     }
 
@@ -56,7 +56,7 @@ class BookServiceImplTest {
     void createBookSuccess() {
         Book book = new Book("Test create");
         assertThat(service.create(book))
-                .extracting(Book::getName)
+                .extracting(Book::getTitle)
                 .isEqualTo("Test create");
 
         ArgumentCaptor<Book> bookArgumentCaptor = ArgumentCaptor.forClass(Book.class);
@@ -70,26 +70,26 @@ class BookServiceImplTest {
     @Test
     void createBookNameConstraintViolationException() {
         Book book = new Book("Test create");
-        book.setName(null);
+        book.setTitle(null);
         assertThatThrownBy(() -> service.create(book))
                 .isInstanceOf(ConstraintViolationException.class)
-                .hasMessage("create.book.name: name must be set");
+                .hasMessage("create.book.title: name must be set");
         verify(dao, never()).create(book);
     }
 
     @DisplayName("Вернет одну книгу по заданному идентификатору")
     @Test
     void getByIdSuccess() {
-        given(dao.get(1L))
+        given(dao.getOptional(1L))
                 .willReturn(Optional.of(new Book(1L, "Test get")));
 
         assertThat(service.get(1L))
                 .isNotEmpty()
                 .get()
-                .extracting(Book::getName)
+                .extracting(Book::getTitle)
                 .isEqualTo("Test get");
 
-        verify(dao, only()).get(1L);
+        verify(dao, only()).getOptional(1L);
     }
 
     @DisplayName("Вернет пустой Optional т.к. книга с заданным идентификатором не создана")
@@ -98,7 +98,7 @@ class BookServiceImplTest {
         assertThat(service.get(1L))
                 .isEmpty();
 
-        verify(dao, only()).get(1L);
+        verify(dao, only()).getOptional(1L);
     }
 
     @DisplayName("Изменит книгу и вернет ее")
@@ -107,7 +107,7 @@ class BookServiceImplTest {
         Book book = new Book(1L, "Test update");
 
         assertThat(service.update(book))
-                .extracting(Book::getName)
+                .extracting(Book::getTitle)
                 .isEqualTo("Test update");
 
         verify(dao, only()).update(book);
@@ -130,43 +130,43 @@ class BookServiceImplTest {
     void delete() {
         service.delete(1L);
 
-        verify(dao, only()).delete(1L);
+        verify(dao, only()).deleteById(1L);
     }
 
     @DisplayName("Найдет книги по заданному имени")
     @Test
     void findByName() {
-        given(dao.findByName(anyString()))
+        given(dao.findByTitle(anyString()))
                 .will((invocationOnMock) -> {
                     String name = invocationOnMock.getArgument(0);
                     return List.of(new Book(1L, name),
                             new Book(2L, name));
                 });
 
-        assertThat(service.findByName("test search"))
+        assertThat(service.findByTitle("test search"))
                 .hasSize(2)
-                .flatExtracting(Book::getName)
+                .flatExtracting(Book::getTitle)
                 .containsOnly("test search");
 
-        verify(dao, only()).findByName("test search");
+        verify(dao, only()).findByTitle("test search");
     }
 
     @DisplayName("Найдет книги по имени автора")
     @Test
     void findByAuthorName() {
-        given(dao.findByAuthorName(anyString()))
+        given(dao.findByAuthorFullName(anyString()))
                 .will((invocationOnMock) -> {
                     String name = invocationOnMock.getArgument(0);
                     return List.of(new Book(1L, name),
                             new Book(2L, name));
                 });
 
-        assertThat(service.findByAuthorName("test search"))
+        assertThat(service.findByAuthorFullName("test search"))
                 .hasSize(2)
-                .flatExtracting(Book::getName)
+                .flatExtracting(Book::getTitle)
                 .containsOnly("test search");
 
-        verify(dao, only()).findByAuthorName("test search");
+        verify(dao, only()).findByAuthorFullName("test search");
     }
 
     @DisplayName("Найдет книги по названию жанра")
@@ -181,7 +181,7 @@ class BookServiceImplTest {
 
         assertThat(service.findByGenreName("test search"))
                 .hasSize(2)
-                .flatExtracting(Book::getName)
+                .flatExtracting(Book::getTitle)
                 .containsOnly("test search");
 
         verify(dao, only()).findByGenreName("test search");

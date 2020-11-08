@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -27,58 +28,61 @@ public class AuthorDaoJdbc implements AuthorDao {
     @Override
     public Author create(Author author) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update("INSERT INTO AUTHORS(NAME, DESCRIPTION) VALUES(:name, :desc)",
+        jdbc.update("INSERT INTO AUTHORS(FULL_NAME, DESCRIPTION) VALUES(:name, :desc)",
                 new MapSqlParameterSource()
-                        .addValue("name", author.getName())
+                        .addValue("name", author.getFullName())
                         .addValue("desc", author.getDescription()),
                 keyHolder);
         Number id = Objects.requireNonNull(keyHolder.getKey());
-        return get(id.longValue())
+        return getOptional(id.longValue())
                 .orElseThrow(
                         () -> new BookCreationException(
                                 String.format("The author with id '%s' was not created", id)));
     }
 
     @Override
-    public Optional<Author> get(long id) {
-        return jdbc.query("SELECT a.ID, a.NAME, a.DESCRIPTION FROM AUTHORS a WHERE a.ID = :id",
-                new MapSqlParameterSource()
-                        .addValue("id", id),
-                new AuthorRowMapper())
-                .stream()
+    public Optional<Author> getOptional(long id) {
+        return getByIds(Set.of(id)).stream()
                 .findFirst();
     }
 
     @Override
     public Author update(Author author) {
-        jdbc.update("UPDATE AUTHORS SET NAME = :name, DESCRIPTION = :desc WHERE ID = :id",
+        jdbc.update("UPDATE AUTHORS SET FULL_NAME = :name, DESCRIPTION = :desc WHERE ID = :id",
                 Map.of("id", author.getId(),
-                        "name", author.getName(),
+                        "name", author.getFullName(),
                         "desc", author.getDescription()));
-        return get(author.getId())
+        return getOptional(author.getId())
                 .orElseThrow(
                         () -> new ObjectNotFound(
                                 String.format("The author with id '%s' was found", author.getId())));
     }
 
     @Override
-    public void delete(long id) {
+    public void deleteById(long id) {
         jdbc.update("DELETE AUTHORS WHERE ID = :id", Map.of("id", id));
     }
 
     @Override
-    public List<Author> findByName(String name) {
-        return jdbc.query("SELECT a.ID, a.NAME, a.DESCRIPTION FROM AUTHORS a WHERE a.NAME = :name",
+    public List<Author> findByFullName(String name) {
+        return jdbc.query("SELECT a.ID, a.FULL_NAME, a.DESCRIPTION FROM AUTHORS a WHERE a.FULL_NAME = :name",
                 new MapSqlParameterSource()
                         .addValue("name", name),
                 new AuthorRowMapper());
     }
 
-    private static class AuthorRowMapper implements RowMapper<Author> {
+    private List<Author> getByIds(Set<Long> ids) {
+        return jdbc.query("SELECT a.ID, a.FULL_NAME, a.DESCRIPTION FROM AUTHORS a WHERE a.ID in (:ids)",
+                new MapSqlParameterSource()
+                        .addValue("ids", ids),
+                new AuthorRowMapper());
+    }
+
+    static class AuthorRowMapper implements RowMapper<Author> {
 
         @Override
         public Author mapRow(ResultSet record, int rowNum) throws SQLException {
-            return new Author(record.getLong("ID"), record.getString("NAME"), record.getString("DESCRIPTION"));
+            return new Author(record.getLong("ID"), record.getString("FULL_NAME"), record.getString("DESCRIPTION"));
         }
     }
 }

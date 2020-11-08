@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import ru.ilpopov.otus.simple.library.dao.AuthorDao;
 import ru.ilpopov.otus.simple.library.domain.Author;
-import ru.ilpopov.otus.simple.library.domain.Genre;
 
 @DisplayName("Тестирование DAO слоя по работе с авторами")
 @JdbcTest
@@ -29,25 +28,25 @@ class AuthorDaoJdbcTest {
     void create() {
         Author author = new Author("Test");
         assertThat(authorDao.create(author))
-                .extracting(Author::getName)
+                .extracting(Author::getFullName)
                 .isEqualTo("Test");
     }
 
     @DisplayName("Вычитает из БД автора по идентификатору")
     @Test
     void get() {
-        assertThat(authorDao.get(1L).get())
-                .extracting(Author::getName)
+        assertThat(authorDao.getOptional(1L)).get()
+                .extracting(Author::getFullName)
                 .isEqualTo("Автор 1");
     }
 
     @DisplayName("Переименует автора")
     @Test
     void update() {
-        Author author = authorDao.get(1L).get();
-        author.setName("Test update");
+        Author author = authorDao.getOptional(1L).get();
+        author.setFullName("Test update");
         assertThat(authorDao.update(author))
-                .extracting(Author::getName)
+                .extracting(Author::getFullName)
                 .isEqualTo("Test update");
     }
 
@@ -55,7 +54,7 @@ class AuthorDaoJdbcTest {
     @Test
     void delete() {
         long deleteId = 4L;
-        authorDao.delete(deleteId);
+        authorDao.deleteById(deleteId);
 
         Long count = jdbc.queryForObject(
                 "SELECT COUNT(a.*) FROM AUTHORS a WHERE a.ID = :id",
@@ -65,10 +64,10 @@ class AuthorDaoJdbcTest {
         assertThat(count).isEqualTo(0);
     }
 
-    @DisplayName("Найдет жанр по названию")
+    @DisplayName("Найдет автора по имени")
     @Test
     void findByName() {
-        assertThat(authorDao.findByName("Автор 1"))
+        assertThat(authorDao.findByFullName("Автор 1"))
                 .flatExtracting(Author::getId)
                 .contains(1L);
     }

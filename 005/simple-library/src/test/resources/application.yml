@@ -2,3 +2,7 @@ spring:
   datasource:
     schema: classpath:database/schema.sql
     data: classpath:database/test-data.sql
+
+logging:
+  level:
+    org.springframework.jdbc.core: DEBUG

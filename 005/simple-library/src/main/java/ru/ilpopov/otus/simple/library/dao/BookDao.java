@@ -11,15 +11,15 @@ public interface BookDao {
 
     Book create(@NotNull Book book);
 
-    Optional<Book> get(long id);
+    Optional<Book> getOptional(long id);
 
     Book update(@NotNull Book book);
 
-    void delete(long id);
+    void deleteById(long id);
 
-    List<Book> findByName(@NotNull String name);
+    List<Book> findByTitle(@NotNull String title);
 
-    List<Book> findByAuthorName(@NotNull String name);
+    List<Book> findByAuthorFullName(@NotNull String fullName);
 
     List<Book> findByGenreName(@NotNull String name);
 }

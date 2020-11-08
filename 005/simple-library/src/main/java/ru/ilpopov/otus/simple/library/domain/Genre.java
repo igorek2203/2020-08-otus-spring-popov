@@ -1,25 +1,25 @@
 package ru.ilpopov.otus.simple.library.domain;
 
-import lombok.EqualsAndHashCode;
+import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import ru.ilpopov.otus.simple.library.domain.validation.Insert;
+import ru.ilpopov.otus.simple.library.domain.validation.Update;
 
-@EqualsAndHashCode(callSuper = true)
-public class Genre extends AbstractModel {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Genre {
 
-    public Genre(Long id, String name) {
-        super(id, name);
-    }
+    @NotNull(groups = {Update.class}, message = "id must be set")
+    private Long id;
+
+    @NotNull(groups = {Insert.class, Update.class}, message = "name must be set")
+    private String name;
 
     public Genre(String name) {
-        super(name);
+        this(null, name);
     }
 
-    public Genre(Long id, String name, String description) {
-        super(id, name, description);
-    }
-
-    @Override
-    public String toString() {
-        return super.toStringHelper()
-                .toString();
-    }
 }

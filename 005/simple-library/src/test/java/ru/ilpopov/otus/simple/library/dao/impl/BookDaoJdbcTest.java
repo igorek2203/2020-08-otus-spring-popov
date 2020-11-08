@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ class BookDaoJdbcTest {
     @Test
     void createBookWithAuthorWhoDoesNotExists() {
         Book newBook = new Book("Test creation");
-        newBook.setAuthors(List.of(new Author("NotExisted")));
+        newBook.getAuthors().addAll(Set.of(new Author("NotExisted")));
 
         assertThatThrownBy(() -> bookDao.create(newBook))
                 .isInstanceOf(BookCreationException.class)
@@ -43,7 +44,7 @@ class BookDaoJdbcTest {
     @Test
     void createBookWithGenreThatDoesNotExists() {
         Book newBook = new Book("Test creation");
-        newBook.setGenres(List.of(new Genre("NotExisted")));
+        newBook.getGenres().addAll(Set.of(new Genre("NotExisted")));
 
         assertThatThrownBy(() -> bookDao.create(newBook))
                 .isInstanceOf(BookCreationException.class)
@@ -54,20 +55,20 @@ class BookDaoJdbcTest {
     @Test
     void createBook() {
         Book newBook = new Book("Test creation");
-        newBook.setAuthors(List.of(new Author("Автор 1"), new Author("Автор 2")));
-        newBook.setGenres(List.of(new Genre("Жанр 1"), new Genre("Жанр 2")));
+        newBook.getAuthors().addAll(Set.of(new Author("Автор 1"), new Author("Автор 2")));
+        newBook.getGenres().addAll(Set.of(new Genre("Жанр 1"), new Genre("Жанр 2")));
 
         Book createdBook = bookDao.create(newBook);
 
         assertThat(createdBook)
-                .extracting(Book::getName)
+                .extracting(Book::getTitle)
                 .isEqualTo("Test creation");
         assertThat(createdBook.getAuthors())
-                .extracting(Author::getName)
-                .containsExactly("Автор 1", "Автор 2");
+                .extracting(Author::getFullName)
+                .containsOnlyOnce("Автор 1", "Автор 2");
         assertThat(createdBook.getGenres())
                 .extracting(Genre::getName)
-                .containsExactly("Жанр 1", "Жанр 2");
+                .containsOnlyOnce("Жанр 1", "Жанр 2");
     }
 
     @DisplayName("Создаст книгу без авторов и жанров и вернет ее")
@@ -76,7 +77,7 @@ class BookDaoJdbcTest {
         Book newBook = new Book("Test creation");
         Book createdBook = bookDao.create(newBook);
         assertThat(createdBook)
-                .extracting(Book::getName)
+                .extracting(Book::getTitle)
                 .isEqualTo("Test creation");
         assertThat(createdBook.getAuthors())
                 .isEmpty();
@@ -87,24 +88,24 @@ class BookDaoJdbcTest {
     @DisplayName("Получит одну тестовую книгу с 3мя авторами и 3мя жанрами")
     @Test
     void getBook() {
-        Book book = bookDao.get(1L).orElseThrow();
+        Book book = bookDao.getOptional(1L).orElseThrow();
         assertThat(book)
                 .extracting(Book::getId)
                 .isEqualTo(1L);
         assertThat(book.getAuthors())
-                .extracting(Author::getName)
+                .extracting(Author::getFullName)
                 .asList()
-                .containsExactly("Автор 1", "Автор 2", "Автор 3");
+                .containsOnlyOnce("Автор 1", "Автор 2", "Автор 3");
         assertThat(book.getGenres())
                 .extracting(Genre::getName)
                 .asList()
-                .containsExactly("Жанр 1", "Жанр 2", "Жанр 3");
+                .containsOnlyOnce("Жанр 1", "Жанр 2", "Жанр 3");
     }
 
     @DisplayName("Получит одну тестовую книгу без авторов и жанров")
     @Test
     void getBookWithoutAuthorsAndGenres() {
-        Book book = bookDao.get(2L).orElseThrow();
+        Book book = bookDao.getOptional(2L).orElseThrow();
         assertThat(book)
                 .extracting(Book::getId)
                 .isEqualTo(2L);
@@ -120,10 +121,10 @@ class BookDaoJdbcTest {
         Book newBook = new Book("Test update");
         Book createdBook = bookDao.create(newBook);
 
-        createdBook.setName("Test Updated");
+        createdBook.setTitle("Test Updated");
 
         assertThat(bookDao.update(createdBook))
-                .extracting(Book::getName)
+                .extracting(Book::getTitle)
                 .isEqualTo("Test Updated");
     }
 
@@ -131,20 +132,21 @@ class BookDaoJdbcTest {
     @Test
     void updateBookChangeAuthors() {
         Book newBook = new Book("Test create");
-        newBook.setAuthors(List.of(new Author("Автор 1"), new Author("Автор 2")));
+        newBook.getAuthors().addAll(Set.of(new Author("Автор 1"), new Author("Автор 2")));
         Book createdBook = bookDao.create(newBook);
 
-        createdBook.setName("Test updated");
-        createdBook.setAuthors(List.of(new Author("Автор 3"), new Author("Автор 2")));
+        createdBook.setTitle("Test updated");
+        createdBook.getAuthors().removeIf(a -> "Автор 1".equalsIgnoreCase(a.getFullName()));
+        createdBook.getAuthors().add(new Author("Автор 3"));
 
         Book updatedBook = bookDao.update(createdBook);
 
         assertThat(updatedBook)
-                .extracting(Book::getName)
+                .extracting(Book::getTitle)
                 .isEqualTo("Test updated");
 
         assertThat(updatedBook.getAuthors())
-                .flatExtracting(Author::getName)
+                .flatExtracting(Author::getFullName)
                 .containsOnly("Автор 3", "Автор 2");
     }
 
@@ -152,16 +154,17 @@ class BookDaoJdbcTest {
     @Test
     void updateBookChangeGenres() {
         Book newBook = new Book("Test update");
-        newBook.setGenres(List.of(new Genre("Жанр 1"), new Genre("Жанр 2")));
+        newBook.getGenres().addAll(Set.of(new Genre("Жанр 1"), new Genre("Жанр 2")));
         Book createdBook = bookDao.create(newBook);
 
-        createdBook.setName("Test Updated");
-        createdBook.setGenres(List.of(new Genre("Жанр 3"), new Genre("Жанр 2")));
+        createdBook.setTitle("Test Updated");
+        createdBook.getGenres().removeIf(g -> "Жанр 1".equalsIgnoreCase(g.getName()));
+        createdBook.getGenres().add(new Genre("Жанр 3"));
 
         Book updatedBook = bookDao.update(createdBook);
 
         assertThat(updatedBook)
-                .extracting(Book::getName)
+                .extracting(Book::getTitle)
                 .isEqualTo("Test Updated");
 
         assertThat(updatedBook.getGenres())
@@ -173,12 +176,12 @@ class BookDaoJdbcTest {
     @Test
     void deleteBook() {
         Book newBook = new Book("Test deletion");
-        newBook.setAuthors(List.of(new Author("Автор 1"), new Author("Автор 2")));
-        newBook.setGenres(List.of(new Genre("Жанр 1"), new Genre("Жанр 2")));
+        newBook.getAuthors().addAll(Set.of(new Author("Автор 1"), new Author("Автор 2")));
+        newBook.getGenres().addAll(Set.of(new Genre("Жанр 1"), new Genre("Жанр 2")));
 
         Book createdBook = bookDao.create(newBook);
 
-        bookDao.delete(createdBook.getId());
+        bookDao.deleteById(createdBook.getId());
 
         Long genresCount = jdbc.queryForObject(
                 "SELECT COUNT(r.*) FROM BOOKS_GENRES_RELATIONS r WHERE r.BOOK_ID = :id",
@@ -203,19 +206,30 @@ class BookDaoJdbcTest {
     @DisplayName("Найдет книги по имени")
     @Test
     void findByName() {
-        List<Book> books = bookDao.findByName("Книга 1");
+        List<Book> books = bookDao.findByTitle("Книга 1");
         assertThat(books)
-                .flatExtracting(Book::getName)
+                .flatExtracting(Book::getTitle)
                 .contains("Книга 1");
+
+        assertThat(books)
+                .flatExtracting(Book::getAuthors)
+                .extracting(Author::getFullName)
+                .containsOnlyOnce("Автор 1", "Автор 3");
+
+        assertThat(books)
+                .flatExtracting(Book::getGenres)
+                .extracting(Genre::getName)
+                .containsOnlyOnce("Жанр 1", "Жанр 2","Жанр 3");
+
     }
 
     @DisplayName("Найдет книги по имени ее автора")
     @Test
     void findByAuthorName() {
-        List<Book> books = bookDao.findByAuthorName("Автор 1");
+        List<Book> books = bookDao.findByAuthorFullName("Автор 1");
         assertThat(books)
-                .flatExtracting(Book::getName)
-                .contains("Книга 1");
+                .flatExtracting(Book::getTitle)
+                .contains("Книга 1", "Книга 3");
     }
 
     @DisplayName("Найдет книги по названию жанра")
@@ -223,7 +237,7 @@ class BookDaoJdbcTest {
     void findByGenreName() {
         List<Book> books = bookDao.findByGenreName("Жанр 1");
         assertThat(books)
-                .flatExtracting(Book::getName)
-                .contains("Книга 1");
+                .flatExtracting(Book::getTitle)
+                .contains("Книга 1", "Книга 4");
     }
 }

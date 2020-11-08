@@ -21,7 +21,7 @@ public class GenreServiceImpl implements GenreService {
 
     @Override
     public Optional<Genre> get(long id) {
-        return genreDao.get(id);
+        return genreDao.getOptional(id);
     }
 
     @Override
@@ -31,7 +31,7 @@ public class GenreServiceImpl implements GenreService {
 
     @Override
     public void delete(long id) {
-        genreDao.delete(id);
+        genreDao.deleteById(id);
     }
 
     @Override

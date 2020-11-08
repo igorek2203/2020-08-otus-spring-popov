@@ -2,6 +2,7 @@ package ru.ilpopov.otus.simple.library.dao;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import javax.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 import ru.ilpopov.otus.simple.library.domain.Genre;
@@ -11,11 +12,12 @@ public interface GenreDao {
 
     Genre create(@NotNull Genre genre);
 
-    Optional<Genre> get(long id);
+    Optional<Genre> getOptional(long id);
 
     Genre update(@NotNull Genre genre);
 
-    void delete(long id);
+    void deleteById(long id);
 
     List<Genre> findByName(@NotNull String name);
+
 }

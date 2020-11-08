@@ -20,13 +20,13 @@ public class BookFormatterServiceImpl implements FormatterService<Book> {
     public String formatToString(Book book) {
         String authors = book.getAuthors()
                 .stream()
-                .map(Author::getName)
+                .map(Author::getFullName)
                 .collect(Collectors.joining(", "));
         String genres = book.getGenres()
                 .stream()
                 .map(Genre::getName)
                 .collect(Collectors.joining(", "));
-        return String.format(BOOK_TEMPLATE, book.getId(), book.getName(), authors, genres,
+        return String.format(BOOK_TEMPLATE, book.getId(), book.getTitle(), authors, genres,
                 Strings.nullToEmpty(book.getDescription()));
     }
 

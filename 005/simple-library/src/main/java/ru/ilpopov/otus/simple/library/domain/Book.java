@@ -1,40 +1,43 @@
 package ru.ilpopov.otus.simple.library.domain;
 
-import com.google.common.collect.Lists;
-import java.util.List;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.HashSet;
+import java.util.Set;
+import javax.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import ru.ilpopov.otus.simple.library.domain.validation.Insert;
+import ru.ilpopov.otus.simple.library.domain.validation.Update;
 
-@Setter
-@Getter
-@EqualsAndHashCode(callSuper = true)
-public class Book extends AbstractModel {
+@Data
+@NoArgsConstructor
+public class Book {
 
-    private List<Author> authors = Lists.newArrayList();
-    private List<Genre> genres = Lists.newArrayList();
+    @NotNull(groups = {Update.class}, message = "id must be set")
+    private Long id;
 
-    public Book(Long id, String name, String description) {
-        super(id, name, description);
+    @NotNull(groups = {Insert.class, Update.class}, message = "name must be set")
+    private String title;
+
+    private String description;
+
+    private final Set<Author> authors = new HashSet<>();
+    private final Set<Genre> genres = new HashSet<>();
+
+    public Book(Long id, String title, String description) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
     }
 
-    public Book(Long id, String name) {
-        super(id, name);
+    public Book(Long id, String title) {
+        this(id, title, null);
     }
 
-    public Book(String name, String description) {
-        super(name, description);
+    public Book(String title, String description) {
+        this(null, title, description);
     }
 
-    public Book(String name) {
-        super(name);
-    }
-
-    @Override
-    public String toString() {
-        return super.toStringHelper()
-                .add("authors", authors)
-                .add("genres", genres)
-                .toString();
+    public Book(String title) {
+        this(title, null);
     }
 }

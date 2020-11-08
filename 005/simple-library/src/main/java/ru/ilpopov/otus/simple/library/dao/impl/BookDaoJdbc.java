@@ -3,10 +3,13 @@ package ru.ilpopov.otus.simple.library.dao.impl;
 import com.google.common.base.Strings;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -36,35 +39,35 @@ public class BookDaoJdbc implements BookDao {
     @Override
     public Book create(Book book) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update("INSERT INTO BOOKS(NAME, DESCRIPTION) VALUES(:name, :desc)",
+        jdbc.update("INSERT INTO BOOKS(TITLE, DESCRIPTION) VALUES(:name, :desc)",
                 new MapSqlParameterSource()
-                        .addValue("name", book.getName())
+                        .addValue("name", book.getTitle())
                         .addValue("desc", book.getDescription()),
                 keyHolder);
         Number id = Objects.requireNonNull(keyHolder.getKey());
         book.setId(id.longValue());
         createRelations(book);
-        return get(id.longValue())
+        return getOptional(id.longValue())
                 .orElseThrow(
                         () -> new BookCreationException(
                                 String.format("The book with id '%s' was not created", id)));
     }
 
     @Override
-    public Optional<Book> get(long id) {
-        return groupAuthorsAndGenresByBook(findOneToOneBooksByListId(List.of(id))).stream()
+    public Optional<Book> getOptional(long id) {
+        return getBooksByListId(Set.of(id)).stream()
                 .findFirst();
     }
 
     @Override
     public Book update(Book book) {
-        Book oldBook = get(book.getId()).orElseThrow(() -> new ObjectNotFound("The book does not exists"));
-        jdbc.update("UPDATE BOOKS SET NAME = :name, DESCRIPTION = :desc WHERE ID = :id",
+        Book oldBook = getOptional(book.getId()).orElseThrow(() -> new ObjectNotFound("The book does not exists"));
+        jdbc.update("UPDATE BOOKS SET TITLE = :name, DESCRIPTION = :desc WHERE ID = :id",
                 Map.of("id", book.getId(),
-                        "name", book.getName(),
+                        "name", book.getTitle(),
                         "desc", Strings.nullToEmpty(book.getDescription())));
         updateRelations(oldBook, book);
-        return get(book.getId())
+        return getOptional(book.getId())
                 .orElseThrow(
                         () -> new ObjectNotFound(
                                 String.format("The book with id '%s' was found", book.getId())));
@@ -108,31 +111,13 @@ public class BookDaoJdbc implements BookDao {
     }
 
     @Override
-    public void delete(long id) {
-        get(id).ifPresent(b -> {
-            detachAuthors(b);
-            detachGenres(b);
-            jdbc.update("DELETE BOOKS WHERE ID = :id", Map.of("id", b.getId()));
-        });
-    }
-
-    private void detachAuthors(Book book) {
-        List<Long> authorIds = book.getAuthors().stream()
-                .map(Author::getId)
-                .collect(Collectors.toList());
-        detachAuthors(book.getId(), authorIds);
+    public void deleteById(long id) {
+        jdbc.update("DELETE BOOKS WHERE ID = :id", Map.of("id", id));
     }
 
     private void detachAuthors(long bookId, List<Long> authorIds) {
         jdbc.update("DELETE BOOKS_AUTHORS_RELATIONS WHERE BOOK_ID = :bookId AND AUTHOR_ID IN (:authorIds)",
                 Map.of("bookId", bookId, "authorIds", authorIds));
-    }
-
-    private void detachGenres(Book book) {
-        List<Long> genreIds = book.getGenres().stream()
-                .map(Genre::getId)
-                .collect(Collectors.toList());
-        detachGenres(book.getId(), genreIds);
     }
 
     private void detachGenres(long bookId, List<Long> genreIds) {
@@ -141,8 +126,8 @@ public class BookDaoJdbc implements BookDao {
     }
 
     @Override
-    public List<Book> findByName(String name) {
-        return groupAuthorsAndGenresByBook(findOneToOneBooksByName(name));
+    public List<Book> findByTitle(String name) {
+        return findBooksByName(name);
     }
 
     private void createRelations(Book book) {
@@ -159,12 +144,12 @@ public class BookDaoJdbc implements BookDao {
 
     private Long resolveAuthorId(Author a) {
         return Optional.ofNullable(a.getId())
-                .orElseGet(() -> authorDao.findByName(a.getName())
+                .orElseGet(() -> authorDao.findByFullName(a.getFullName())
                         .stream()
                         .mapToLong(Author::getId)
                         .findFirst()
                         .orElseThrow(() -> new BookCreationException(
-                                String.format("The author '%s' must be existed before the book", a.getName()))));
+                                String.format("The author '%s' must be existed before the book", a.getFullName()))));
     }
 
     private void createBookGenresRelations(Book book) {
@@ -201,114 +186,91 @@ public class BookDaoJdbc implements BookDao {
     }
 
     @Override
-    public List<Book> findByAuthorName(@NotNull String name) {
-        List<Long> bookIdList = jdbc.queryForList("SELECT bar.BOOK_ID \n"
+    public List<Book> findByAuthorFullName(@NotNull String name) {
+        Set<Long> bookIds = new HashSet<>(jdbc.queryForList("SELECT bar.BOOK_ID \n"
                         + "FROM AUTHORS a \n"
                         + "JOIN BOOKS_AUTHORS_RELATIONS bar ON bar.AUTHOR_ID = a.ID \n"
-                        + "WHERE a.NAME = :name",
+                        + "WHERE a.FULL_NAME = :name",
                 new MapSqlParameterSource().addValue("name", name),
-                Long.class);
-        return groupAuthorsAndGenresByBook(findOneToOneBooksByListId(bookIdList));
+                Long.class));
+        return getBooksByListId(bookIds);
     }
 
     @Override
     public List<Book> findByGenreName(@NotNull String name) {
-        List<Long> bookIdList = jdbc.queryForList("SELECT bgr.BOOK_ID \n"
+        Set<Long> bookIds = new HashSet<>(jdbc.queryForList("SELECT bgr.BOOK_ID \n"
                         + "FROM GENRES g \n"
                         + "JOIN BOOKS_GENRES_RELATIONS bgr ON bgr.GENRE_ID = g.ID \n"
                         + "WHERE g.NAME = :name",
                 new MapSqlParameterSource().addValue("name", name),
-                Long.class);
-        return groupAuthorsAndGenresByBook(findOneToOneBooksByListId(bookIdList));
+                Long.class));
+        return getBooksByListId(bookIds);
     }
 
-    private List<Book> findOneToOneBooksByName(String name) {
-        return jdbc.query("SELECT b.ID BOOK_ID, b.NAME BOOK_NAME, b.DESCRIPTION BOOK_DESC "
-                        + ", a.ID AUTHOR_ID, a.NAME AUTHOR_NAME, a.DESCRIPTION AUTHOR_DESC"
-                        + ", g.ID GENRE_ID, g.NAME GENRE_NAME, g.DESCRIPTION GENRE_DESC \r\n"
+    private List<Book> findBooksByName(String name) {
+        Set<Long> bookIds = new HashSet<>(jdbc.queryForList("SELECT b.ID BOOK_ID \r\n"
                         + "FROM BOOKS b \r\n"
-                        + "    LEFT JOIN BOOKS_AUTHORS_RELATIONS bar ON bar.BOOK_ID = b.ID \r\n"
-                        + "    LEFT JOIN AUTHORS a ON bar.AUTHOR_ID = a.ID \r\n"
-                        + "    LEFT JOIN BOOKS_GENRES_RELATIONS bgr ON bgr.BOOK_ID = b.ID \r\n"
-                        + "    LEFT JOIN GENRES g ON bgr.GENRE_ID = g.ID \r\n"
-                        + "WHERE b.NAME = :name",
+                        + "WHERE b.TITLE = :name",
                 new MapSqlParameterSource().addValue("name", name),
-                new BookRowMapper());
+                Long.class));
+        return getBooksByListId(bookIds);
     }
 
-    private List<Book> findOneToOneBooksByListId(List<Long> idList) {
-        return jdbc.query("SELECT b.ID BOOK_ID, b.NAME BOOK_NAME, b.DESCRIPTION BOOK_DESC "
-                        + ", a.ID AUTHOR_ID, a.NAME AUTHOR_NAME, a.DESCRIPTION AUTHOR_DESC"
-                        + ", g.ID GENRE_ID, g.NAME GENRE_NAME, g.DESCRIPTION GENRE_DESC \r\n"
+    private List<Book> getBooksByListId(Set<Long> ids) {
+        List<Book> books = jdbc.query("SELECT b.ID BOOK_ID, b.TITLE BOOK_TITLE, b.DESCRIPTION BOOK_DESC \r\n"
                         + "FROM BOOKS b \r\n"
-                        + "    LEFT JOIN BOOKS_AUTHORS_RELATIONS bar ON bar.BOOK_ID = b.ID \r\n"
-                        + "    LEFT JOIN AUTHORS a ON bar.AUTHOR_ID = a.ID \r\n"
-                        + "    LEFT JOIN BOOKS_GENRES_RELATIONS bgr ON bgr.BOOK_ID = b.ID \r\n"
-                        + "    LEFT JOIN GENRES g ON bgr.GENRE_ID = g.ID \r\n"
                         + "WHERE b.ID in (:ids)",
-                new MapSqlParameterSource().addValue("ids", idList),
+                new MapSqlParameterSource().addValue("ids", ids),
                 new BookRowMapper());
-    }
-
-    private List<Book> groupAuthorsAndGenresByBook(List<Book> flatBookList) {
-        Map<Long, List<Author>> authors = groupAuthorsByBook(flatBookList);
-        Map<Long, List<Genre>> genres = groupGenresByBook(flatBookList);
-        return flatBookList.stream()
-                .distinct()
+        Map<Long, Set<Author>> bookAuthorsMap = getBooksAuthorsMap(ids);
+        Map<Long, Set<Genre>> bookGenresMap = getBooksGenresMap(ids);
+        return books
+                .parallelStream()
                 .peek(b -> {
-                    if (authors.get(b.getId()) != null) {
-                        b.setAuthors(authors.get(b.getId()));
-                    } else {
-                        b.setAuthors(List.of());
-                    }
-                    if (genres.get(b.getId()) != null) {
-                        b.setGenres(genres.get(b.getId()));
-                    } else {
-                        b.setGenres(List.of());
-                    }
+                    b.getAuthors()
+                            .addAll(bookAuthorsMap.getOrDefault(b.getId(), Set.of()));
+                    b.getGenres()
+                            .addAll(bookGenresMap.getOrDefault(b.getId(), Set.of()));
                 }).collect(Collectors.toList());
     }
 
-    private static Map<Long, List<Author>> groupAuthorsByBook(List<Book> flatBook) {
-        return flatBook.stream()
-                .filter(b -> !b.getAuthors().isEmpty())
-                .collect(Collectors.groupingBy(Book::getId,
-                        Collectors.flatMapping(book -> book.getAuthors().stream(),
-                                Collectors.collectingAndThen(Collectors.toList(),
-                                        l -> l.stream().distinct()
-                                                .collect(Collectors.toList())))));
+    private Map<Long, Set<Author>> getBooksAuthorsMap(Set<Long> bookIds) {
+        return jdbc.query("SELECT bar.BOOK_ID, a.ID AUTHOR_ID, \r\n"
+                        + "a.FULL_NAME AUTHOR_FULL_NAME, a.DESCRIPTION AUTHOR_DESC \r\n"
+                        + "FROM BOOKS_AUTHORS_RELATIONS bar \r\n"
+                        + "    JOIN AUTHORS a ON bar.AUTHOR_ID = a.ID \r\n"
+                        + "WHERE bar.BOOK_ID in (:bookIds)",
+                Map.of("bookIds", bookIds),
+                (rs, rowNum) -> Map.of(
+                        new Author(rs.getLong("AUTHOR_ID"), rs.getString("AUTHOR_FULL_NAME"),
+                                rs.getString("AUTHOR_DESC")),
+                        rs.getLong("BOOK_ID")))
+                .stream()
+                .flatMap(e -> e.entrySet().stream())
+                .collect(Collectors.groupingBy(Entry::getValue,
+                        Collectors.mapping(Entry::getKey, Collectors.toSet())));
     }
 
-    private static Map<Long, List<Genre>> groupGenresByBook(List<Book> flatBook) {
-        return flatBook.stream()
-                .filter(b -> !b.getGenres().isEmpty())
-                .collect(Collectors.groupingBy(Book::getId,
-                        Collectors.flatMapping(b -> b.getGenres().stream(),
-                                Collectors.collectingAndThen(Collectors.toList(),
-                                        l -> l.stream().distinct()
-                                                .collect(Collectors.toList())))));
+    private Map<Long, Set<Genre>> getBooksGenresMap(Set<Long> bookIds) {
+        return jdbc.query("SELECT bgr.BOOK_ID, g.ID GENRE_ID, g.NAME GENRE_NAME \r\n"
+                        + "FROM BOOKS_GENRES_RELATIONS bgr \r\n"
+                        + "    JOIN GENRES g ON bgr.GENRE_ID = g.ID \r\n"
+                        + "WHERE bgr.BOOK_ID in (:bookIds)",
+                Map.of("bookIds", bookIds),
+                (rs, rowNum) -> Map.of(
+                        new Genre(rs.getLong("GENRE_ID"), rs.getString("GENRE_NAME")),
+                        rs.getLong("BOOK_ID")))
+                .stream()
+                .flatMap(e -> e.entrySet().stream())
+                .collect(Collectors.groupingBy(Entry::getValue,
+                        Collectors.mapping(Entry::getKey, Collectors.toSet())));
     }
 
     private static class BookRowMapper implements RowMapper<Book> {
 
         @Override
         public Book mapRow(ResultSet rec, int rowNum) throws SQLException {
-            Book book = new Book(rec.getLong("BOOK_ID"),
-                    rec.getString("BOOK_NAME"),
-                    rec.getString("BOOK_DESC"));
-            if (rec.getLong("AUTHOR_ID") != 0 && rec.getString("AUTHOR_NAME") != null) {
-                book.getAuthors()
-                        .add(new Author(rec.getLong("AUTHOR_ID"),
-                                rec.getString("AUTHOR_NAME"),
-                                rec.getString("AUTHOR_DESC")));
-            }
-            if (rec.getLong("GENRE_ID") != 0 && rec.getString("GENRE_NAME") != null) {
-                book.getGenres()
-                        .add(new Genre(rec.getLong("GENRE_ID"),
-                                rec.getString("GENRE_NAME"),
-                                rec.getString("GENRE_DESC")));
-            }
-            return book;
+            return new Book(rec.getLong("BOOK_ID"), rec.getString("BOOK_TITLE"), rec.getString("BOOK_DESC"));
         }
     }
 }
