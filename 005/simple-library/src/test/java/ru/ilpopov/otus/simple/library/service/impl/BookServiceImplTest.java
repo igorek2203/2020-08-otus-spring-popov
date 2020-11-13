@@ -80,25 +80,25 @@ class BookServiceImplTest {
     @DisplayName("Вернет одну книгу по заданному идентификатору")
     @Test
     void getByIdSuccess() {
-        given(dao.getOptional(1L))
+        given(dao.getById(1L))
                 .willReturn(Optional.of(new Book(1L, "Test get")));
 
-        assertThat(service.get(1L))
+        assertThat(service.getById(1L))
                 .isNotEmpty()
                 .get()
                 .extracting(Book::getTitle)
                 .isEqualTo("Test get");
 
-        verify(dao, only()).getOptional(1L);
+        verify(dao, only()).getById(1L);
     }
 
     @DisplayName("Вернет пустой Optional т.к. книга с заданным идентификатором не создана")
     @Test
     void getByIdEmptyOptional() {
-        assertThat(service.get(1L))
+        assertThat(service.getById(1L))
                 .isEmpty();
 
-        verify(dao, only()).getOptional(1L);
+        verify(dao, only()).getById(1L);
     }
 
     @DisplayName("Изменит книгу и вернет ее")
@@ -128,7 +128,7 @@ class BookServiceImplTest {
     @DisplayName("Удалит книгу")
     @Test
     void delete() {
-        service.delete(1L);
+        service.deleteById(1L);
 
         verify(dao, only()).deleteById(1L);
     }

@@ -83,25 +83,25 @@ class AuthorServiceImplTest {
     @DisplayName("Вернет одного автора по заданному идентификатору")
     @Test
     void getByIdSuccess() {
-        given(dao.getOptional(1L))
+        given(dao.getById(1L))
                 .willReturn(Optional.of(new Author(1L, "Test get")));
 
-        assertThat(service.get(1L))
+        assertThat(service.getById(1L))
                 .isNotEmpty()
                 .get()
                 .extracting(Author::getFullName)
                 .isEqualTo("Test get");
 
-        verify(dao, only()).getOptional(1L);
+        verify(dao, only()).getById(1L);
     }
 
     @DisplayName("Вернет пустой Optional т.к. автор с заданным идентификатором не создан")
     @Test
     void getByIdEmptyOptional() {
-        assertThat(service.get(1L))
+        assertThat(service.getById(1L))
                 .isEmpty();
 
-        verify(dao, only()).getOptional(1L);
+        verify(dao, only()).getById(1L);
     }
 
     @DisplayName("Изменит автора и вернет его")
@@ -131,7 +131,7 @@ class AuthorServiceImplTest {
     @DisplayName("Удалит автора")
     @Test
     void deleteAuthor() {
-        service.delete(1L);
+        service.deleteById(1L);
 
         verify(dao, only()).deleteById(1L);
     }
@@ -146,7 +146,7 @@ class AuthorServiceImplTest {
                             new Author(2L, name));
                 });
 
-        assertThat(service.findByName("test search"))
+        assertThat(service.findByFullName("test search"))
                 .hasSize(2)
                 .flatExtracting(Author::getFullName)
                 .containsOnly("test search");

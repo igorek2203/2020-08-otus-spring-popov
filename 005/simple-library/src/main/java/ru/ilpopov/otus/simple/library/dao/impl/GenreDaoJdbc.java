@@ -33,14 +33,14 @@ public class GenreDaoJdbc implements GenreDao {
                         .addValue("name", genre.getName()),
                 keyHolder);
         Number id = Objects.requireNonNull(keyHolder.getKey());
-        return getOptional(id.longValue())
+        return getById(id.longValue())
                 .orElseThrow(
                         () -> new BookCreationException(
                                 String.format("The genre with id '%s' was not created", id)));
     }
 
     @Override
-    public Optional<Genre> getOptional(long id) {
+    public Optional<Genre> getById(long id) {
         return getByIds(Set.of(id)).stream()
                 .findFirst();
     }
@@ -49,7 +49,7 @@ public class GenreDaoJdbc implements GenreDao {
     public Genre update(Genre genre) {
         jdbc.update("UPDATE GENRES SET NAME = :name WHERE ID = :id",
                 Map.of("id", genre.getId(), "name", genre.getName()));
-        return getOptional(genre.getId())
+        return getById(genre.getId())
                 .orElseThrow(
                         () -> new ObjectNotFound(
                                 String.format("The genre with id '%s' was found", genre.getId())));

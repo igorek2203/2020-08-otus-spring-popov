@@ -21,8 +21,8 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Optional<Book> get(long id) {
-        return bookDao.getOptional(id);
+    public Optional<Book> getById(long id) {
+        return bookDao.getById(id);
     }
 
     @Override
@@ -31,7 +31,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public void delete(long id) {
+    public void deleteById(long id) {
         bookDao.deleteById(id);
     }
 

@@ -83,25 +83,25 @@ class GenreServiceImplTest {
     @DisplayName("Вернет однин жанр по заданному идентификатору")
     @Test
     void getByIdSuccess() {
-        given(dao.getOptional(1L))
+        given(dao.getById(1L))
                 .willReturn(Optional.of(new Genre(1L, "Test get")));
 
-        assertThat(service.get(1L))
+        assertThat(service.getById(1L))
                 .isNotEmpty()
                 .get()
                 .extracting(Genre::getName)
                 .isEqualTo("Test get");
 
-        verify(dao, only()).getOptional(1L);
+        verify(dao, only()).getById(1L);
     }
 
     @DisplayName("Вернет пустой Optional т.к. жанр с заданным идентификатором не создан")
     @Test
     void getByIdEmptyOptional() {
-        assertThat(service.get(1L))
+        assertThat(service.getById(1L))
                 .isEmpty();
 
-        verify(dao, only()).getOptional(1L);
+        verify(dao, only()).getById(1L);
     }
 
     @DisplayName("Изменит жанр и вернет его")
@@ -131,7 +131,7 @@ class GenreServiceImplTest {
     @DisplayName("Удалит жанр")
     @Test
     void deleteAuthor() {
-        service.delete(1L);
+        service.deleteById(1L);
 
         verify(dao, only()).deleteById(1L);
     }

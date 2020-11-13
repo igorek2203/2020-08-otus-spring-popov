@@ -34,14 +34,14 @@ public class AuthorDaoJdbc implements AuthorDao {
                         .addValue("desc", author.getDescription()),
                 keyHolder);
         Number id = Objects.requireNonNull(keyHolder.getKey());
-        return getOptional(id.longValue())
+        return getById(id.longValue())
                 .orElseThrow(
                         () -> new BookCreationException(
                                 String.format("The author with id '%s' was not created", id)));
     }
 
     @Override
-    public Optional<Author> getOptional(long id) {
+    public Optional<Author> getById(long id) {
         return getByIds(Set.of(id)).stream()
                 .findFirst();
     }
@@ -52,7 +52,7 @@ public class AuthorDaoJdbc implements AuthorDao {
                 Map.of("id", author.getId(),
                         "name", author.getFullName(),
                         "desc", author.getDescription()));
-        return getOptional(author.getId())
+        return getById(author.getId())
                 .orElseThrow(
                         () -> new ObjectNotFound(
                                 String.format("The author with id '%s' was found", author.getId())));

@@ -12,7 +12,7 @@ public interface AuthorDao {
 
     Author create(@NotNull Author author);
 
-    Optional<Author> getOptional(long id);
+    Optional<Author> getById(long id);
 
     Author update(@NotNull Author author);
 

@@ -15,12 +15,12 @@ public interface BookService {
     @Validated(Insert.class)
     Book create(@Valid @NotNull Book book);
 
-    Optional<Book> get(long id);
+    Optional<Book> getById(long id);
 
     @Validated(Update.class)
     Book update(@Valid @NotNull Book book);
 
-    void delete(long id);
+    void deleteById(long id);
 
     List<Book> findByTitle(@NotNull String title);
 

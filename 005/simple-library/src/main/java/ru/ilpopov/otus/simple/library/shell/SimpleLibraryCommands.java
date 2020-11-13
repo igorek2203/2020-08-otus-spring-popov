@@ -37,41 +37,152 @@ public class SimpleLibraryCommands {
             @ShellOption(value = "--desc", defaultValue = "", help = "Book description")
                     String bookDescription,
             @ShellOption(value = {"-A", "--author"},
-                    defaultValue = "Неизвестный автор",
-                    help = "Author name. Split Authors by comma.")
+                    defaultValue = "Неизвестный автор", help = "Author name. Split Authors by comma.")
                     String authors,
             @ShellOption(value = {"-G", "--genre"},
-                    defaultValue = "Неизвестный жанр",
-                    help = "Genre name. Split genres by comma.")
+                    defaultValue = "Неизвестный жанр", help = "Genre name. Split genres by comma.")
                     String genres) {
-
-        List<Author> authorList = Splitter.on(",")
-                .splitToStream(authors)
-                .map(Author::new)
-                .collect(Collectors.toList());
-
-        List<Genre> genreList = Splitter.on(",")
-                .splitToStream(genres)
-                .map(Genre::new)
-                .collect(Collectors.toList());
-
-        Book book = new Book(bookName);
-        if (!Strings.isNullOrEmpty(bookDescription)) {
-            book.setDescription(bookDescription);
-        }
-        book.getAuthors().addAll(authorList);
-        book.getGenres().addAll(genreList);
-        Book createdBook = bookService.create(book);
+        Book createdBook = bookService.create(newBook(bookName, bookDescription, authors, genres));
         stringIOService.writeln("Book created");
         stringIOService.writeln(bookFormatter.formatToString(createdBook));
     }
 
     @ShellMethod(value = "Find books by title", key = {"book-find"})
-    public void findBooksByName(
+    public void findBooksByTitle(
             @ShellOption(value = "--title", defaultValue = "", help = "Book title") String bookTitle,
             @ShellOption(value = "-A", defaultValue = "", help = "Author full name") String authorFullName,
             @ShellOption(value = "-G", defaultValue = "", help = "Genre name") String genreName
     ) {
+        List<Book> books = findBooksByTitleOrAuthorFullNameOrGenreName(bookTitle, authorFullName, genreName);
+        stringIOService.writeln("----------------------------------");
+        stringIOService.writeln(String.format("Books found: %s", books.size()));
+        books.forEach(b -> {
+            stringIOService.writeln("----------------------------------");
+            stringIOService.writeln(bookFormatter.formatToString(b));
+            stringIOService.writeln("");
+        });
+    }
+
+    @ShellMethod(value = "Modify the book", key = {"book-modify"})
+    public void modifyBook(
+            @ShellOption(value = "--id", help = "The book id") Long bookId,
+            @ShellOption(value = "--field", help = "Field name") String fieldName,
+            @ShellOption(value = "--value", help = "New Value") String fieldValue) {
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(
+                updateBookField(bookId, fieldName, fieldValue)));
+    }
+
+
+    @ShellMethod(value = "Associate an existed author with a book", key = {"book-add-author"})
+    public void bookAddAuthor(
+            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
+            @ShellOption(value = "--author", help = "An author name") String authorName) {
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(
+                addAuthorToBook(bookId, authorName)));
+    }
+
+    @ShellMethod(value = "Dissociate an existed author with a book", key = {"book-remove-author"})
+    public void bookRemoveAuthor(
+            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
+            @ShellOption(value = "--author", help = "An author name") String authorName) {
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(
+                removeAuthorFromBook(bookId, authorName)
+        ));
+    }
+
+    @ShellMethod(value = "Associate an existed genre with a book", key = {"book-add-genre"})
+    public void bookAddGenre(
+            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
+            @ShellOption(value = "--genre", help = "An genre name") String genreName) {
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(
+                addGenreToBook(bookId, genreName)));
+    }
+
+    @ShellMethod(value = "Dissociate an existed genre with a book", key = {"book-remove-genre"})
+    public void bookRemoveGenre(
+            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
+            @ShellOption(value = "--genre", help = "An genre name") String genreName) {
+        stringIOService.writeln("Book updated");
+        stringIOService.writeln(bookFormatter.formatToString(
+                removeGenreFromBook(bookId, genreName)));
+    }
+
+    @ShellMethod(value = "Delete the book by id", key = {"book-delete"})
+    public void deleteBook(@ShellOption long id) {
+        bookService.deleteById(id);
+        stringIOService.writeln("The book deleted");
+    }
+
+    private Book removeGenreFromBook(Long bookId, String genreName) {
+        return bookService.getById(bookId)
+                .map(book -> {
+                    book.getGenres().removeIf(a -> a.getName().equalsIgnoreCase(genreName));
+                    return book;
+                })
+                .map(bookService::update)
+                .orElseThrow(() -> new BookModificationException("Can't modify the book"));
+    }
+
+    private Book addGenreToBook(Long bookId, String genreName) {
+        List<Genre> genres = genreService.findByName(genreName);
+        if (genres.isEmpty()) {
+            throw new ObjectNotFound(String.format("The genre '%s' does not exists", genreName));
+        }
+        return bookService.getById(bookId)
+                .map(book -> {
+                    book.getGenres().addAll(genres);
+                    return book;
+                })
+                .map(bookService::update)
+                .orElseThrow(() -> new BookModificationException("Can't modify the book"));
+    }
+
+    private Book removeAuthorFromBook(Long bookId, String authorName) {
+        return bookService.getById(bookId)
+                .map(book -> {
+                    book.getAuthors().removeIf(a -> a.getFullName().equalsIgnoreCase(authorName));
+                    return book;
+                })
+                .map(bookService::update)
+                .orElseThrow(() -> new BookModificationException("Can't modify the book"));
+    }
+
+    private Book addAuthorToBook(Long bookId, String authorName) {
+        List<Author> authors = authorService.findByFullName(authorName);
+        if (authors.isEmpty()) {
+            throw new ObjectNotFound(String.format("The author '%s' does not exists", authorName));
+        }
+        return bookService.getById(bookId)
+                .map(book -> {
+                    book.getAuthors().addAll(authors);
+                    return book;
+                })
+                .map(bookService::update)
+                .orElseThrow(() -> new BookModificationException("Can't modify the book"));
+    }
+
+    private Book updateBookField(Long bookId, String fieldName, String fieldValue) {
+        return bookService.getById(bookId)
+                .map(b -> {
+                    switch (fieldName) {
+                        case "name":
+                            b.setTitle(fieldValue);
+                            break;
+                        case "description":
+                            b.setDescription(fieldValue);
+                    }
+                    return b;
+                })
+                .map(bookService::update)
+                .orElseThrow(() -> new BookModificationException("The book was not found"));
+    }
+
+    private List<Book> findBooksByTitleOrAuthorFullNameOrGenreName(String bookTitle, String authorFullName,
+            String genreName) {
         List<Book> books = new ArrayList<>();
         if (!Strings.isNullOrEmpty(bookTitle)) {
             bookService.findByTitle(bookTitle)
@@ -91,115 +202,35 @@ public class SimpleLibraryCommands {
                     .filter(b -> !books.contains(b))
                     .forEach(books::add);
         }
-
-        stringIOService.writeln("----------------------------------");
-        stringIOService.writeln(String.format("Books found: %s", books.size()));
-        books.forEach(b -> {
-            stringIOService.writeln("----------------------------------");
-            stringIOService.writeln(bookFormatter.formatToString(b));
-            stringIOService.writeln("");
-        });
+        return books;
     }
 
-    @ShellMethod(value = "Modify the book", key = {"book-modify"})
-    public void modifyBook(
-            @ShellOption(value = "--id", help = "The book id") Long bookId,
-            @ShellOption(value = "--field", help = "Field name") String fieldName,
-            @ShellOption(value = "--value", help = "New Value") String fieldValue) {
-        Book updatedBook = bookService.get(bookId)
-                .map(b -> {
-                    switch (fieldName) {
-                        case "name":
-                            b.setTitle(fieldValue);
-                            break;
-                        case "description":
-                            b.setDescription(fieldValue);
-                    }
-                    return b;
-                })
-                .map(bookService::update)
-                .orElseThrow(() -> new BookModificationException("The book was not found"));
-        stringIOService.writeln("Book updated");
-        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
-    }
-
-    @ShellMethod(value = "Associate an existed author with a book", key = {"book-add-author"})
-    public void bookAddAuthor(
-            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
-            @ShellOption(value = "--author", help = "An author name") String authorName) {
-        List<Author> authors = authorService.findByName(authorName);
-        if (authors.isEmpty()) {
-            throw new ObjectNotFound(String.format("The author '%s' does not exists", authorName));
+    private Book newBook(String bookName, String bookDescription, String authors, String genres) {
+        List<Author> authorList = authorsFullNamesStringToAuthors(authors);
+        List<Genre> genreList = genresNamesToGenres(genres);
+        Book book = new Book(bookName);
+        if (!Strings.isNullOrEmpty(bookDescription)) {
+            book.setDescription(bookDescription);
         }
-        Book updatedBook = bookService.get(bookId)
-                .map(book -> {
-                    book.getAuthors()
-                            .addAll(authors);
-                    return book;
-                })
-                .map(bookService::update)
-                .orElseThrow(() -> new BookModificationException("Can't modify the book"));
-        stringIOService.writeln("Book updated");
-        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
+        book.getAuthors().addAll(authorList);
+        book.getGenres().addAll(genreList);
+        return book;
     }
 
-    @ShellMethod(value = "Dissociate an existed author with a book", key = {"book-remove-author"})
-    public void bookRemoveAuthor(
-            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
-            @ShellOption(value = "--author", help = "An author name") String authorName) {
-        Book updatedBook = bookService.get(bookId)
-                .map(book -> {
-                    book.getAuthors()
-                            .removeIf(a -> a.getFullName().equalsIgnoreCase(authorName));
-                    return book;
-                })
-                .map(bookService::update)
-                .orElseThrow(() -> new BookModificationException("Can't modify the book"));
-        stringIOService.writeln("Book updated");
-        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
+    private List<Genre> genresNamesToGenres(String genres) {
+        List<Genre> genreList = Splitter.on(",")
+                .splitToStream(genres)
+                .map(Genre::new)
+                .collect(Collectors.toList());
+        return genreList;
     }
 
-    @ShellMethod(value = "Associate an existed genre with a book", key = {"book-add-genre"})
-    public void bookAddGenre(
-            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
-            @ShellOption(value = "--genre", help = "An genre name") String genreName) {
-        List<Genre> genres = genreService.findByName(genreName);
-        if (genres.isEmpty()) {
-            throw new ObjectNotFound(String.format("The genre '%s' does not exists", genreName));
-        }
-        Book updatedBook = bookService.get(bookId)
-                .map(book -> {
-                    book.getGenres()
-                            .addAll(genres);
-                    return book;
-                })
-                .map(bookService::update)
-                .orElseThrow(() -> new BookModificationException("Can't modify the book"));
-        stringIOService.writeln("Book updated");
-        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
+    private List<Author> authorsFullNamesStringToAuthors(String authors) {
+        List<Author> authorList = Splitter.on(",")
+                .splitToStream(authors)
+                .map(Author::new)
+                .collect(Collectors.toList());
+        return authorList;
     }
-
-    @ShellMethod(value = "Dissociate an existed genre with a book", key = {"book-remove-genre"})
-    public void bookRemoveGenre(
-            @ShellOption(value = "--book-id", help = "A book identifier") Long bookId,
-            @ShellOption(value = "--genre", help = "An genre name") String genreName) {
-        Book updatedBook = bookService.get(bookId)
-                .map(book -> {
-                    book.getGenres()
-                            .removeIf(a -> a.getName().equalsIgnoreCase(genreName));
-                    return book;
-                })
-                .map(bookService::update)
-                .orElseThrow(() -> new BookModificationException("Can't modify the book"));
-        stringIOService.writeln("Book updated");
-        stringIOService.writeln(bookFormatter.formatToString(updatedBook));
-    }
-
-    @ShellMethod(value = "Delete the book by id", key = {"book-delete"})
-    public void deleteBook(@ShellOption long id) {
-        bookService.delete(id);
-        stringIOService.writeln("The book deleted");
-    }
-
 
 }

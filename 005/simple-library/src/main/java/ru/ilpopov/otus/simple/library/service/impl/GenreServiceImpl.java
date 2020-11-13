@@ -20,8 +20,8 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public Optional<Genre> get(long id) {
-        return genreDao.getOptional(id);
+    public Optional<Genre> getById(long id) {
+        return genreDao.getById(id);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public void delete(long id) {
+    public void deleteById(long id) {
         genreDao.deleteById(id);
     }
 

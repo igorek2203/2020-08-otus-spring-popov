@@ -15,12 +15,12 @@ public interface GenreService {
     @Validated(Insert.class)
     Genre create(@Valid @NotNull Genre genre);
 
-    Optional<Genre> get(long id);
+    Optional<Genre> getById(long id);
 
     @Validated(Update.class)
     Genre update(@Valid @NotNull Genre genre);
 
-    void delete(long id);
+    void deleteById(long id);
 
     List<Genre> findByName(@NotNull String name);
 }

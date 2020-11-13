@@ -88,7 +88,7 @@ class BookDaoJdbcTest {
     @DisplayName("Получит одну тестовую книгу с 3мя авторами и 3мя жанрами")
     @Test
     void getBook() {
-        Book book = bookDao.getOptional(1L).orElseThrow();
+        Book book = bookDao.getById(1L).orElseThrow();
         assertThat(book)
                 .extracting(Book::getId)
                 .isEqualTo(1L);
@@ -105,7 +105,7 @@ class BookDaoJdbcTest {
     @DisplayName("Получит одну тестовую книгу без авторов и жанров")
     @Test
     void getBookWithoutAuthorsAndGenres() {
-        Book book = bookDao.getOptional(2L).orElseThrow();
+        Book book = bookDao.getById(2L).orElseThrow();
         assertThat(book)
                 .extracting(Book::getId)
                 .isEqualTo(2L);

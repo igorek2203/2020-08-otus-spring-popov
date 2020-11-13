@@ -15,12 +15,12 @@ public interface AuthorService {
     @Validated(Insert.class)
     Author create(@Valid @NotNull Author author);
 
-    Optional<Author> get(long id);
+    Optional<Author> getById(long id);
 
     @Validated(Update.class)
     Author update(@Valid @NotNull Author author);
 
-    void delete(long id);
+    void deleteById(long id);
 
-    List<Author> findByName(@NotNull String name);
+    List<Author> findByFullName(@NotNull String fullName);
 }

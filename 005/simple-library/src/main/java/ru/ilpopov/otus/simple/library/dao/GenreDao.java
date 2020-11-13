@@ -12,7 +12,7 @@ public interface GenreDao {
 
     Genre create(@NotNull Genre genre);
 
-    Optional<Genre> getOptional(long id);
+    Optional<Genre> getById(long id);
 
     Genre update(@NotNull Genre genre);
 

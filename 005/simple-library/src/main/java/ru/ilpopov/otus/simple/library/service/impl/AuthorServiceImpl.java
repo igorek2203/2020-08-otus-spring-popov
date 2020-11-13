@@ -20,8 +20,8 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public Optional<Author> get(long id) {
-        return authorDao.getOptional(id);
+    public Optional<Author> getById(long id) {
+        return authorDao.getById(id);
     }
 
     @Override
@@ -30,12 +30,12 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public void delete(long id) {
+    public void deleteById(long id) {
         authorDao.deleteById(id);
     }
 
     @Override
-    public List<Author> findByName(String name) {
-        return authorDao.findByFullName(name);
+    public List<Author> findByFullName(String fullName) {
+        return authorDao.findByFullName(fullName);
     }
 }

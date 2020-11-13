@@ -47,27 +47,27 @@ public class BookDaoJdbc implements BookDao {
         Number id = Objects.requireNonNull(keyHolder.getKey());
         book.setId(id.longValue());
         createRelations(book);
-        return getOptional(id.longValue())
+        return getById(id.longValue())
                 .orElseThrow(
                         () -> new BookCreationException(
                                 String.format("The book with id '%s' was not created", id)));
     }
 
     @Override
-    public Optional<Book> getOptional(long id) {
+    public Optional<Book> getById(long id) {
         return getBooksByListId(Set.of(id)).stream()
                 .findFirst();
     }
 
     @Override
     public Book update(Book book) {
-        Book oldBook = getOptional(book.getId()).orElseThrow(() -> new ObjectNotFound("The book does not exists"));
+        Book oldBook = getById(book.getId()).orElseThrow(() -> new ObjectNotFound("The book does not exists"));
         jdbc.update("UPDATE BOOKS SET TITLE = :name, DESCRIPTION = :desc WHERE ID = :id",
                 Map.of("id", book.getId(),
                         "name", book.getTitle(),
                         "desc", Strings.nullToEmpty(book.getDescription())));
         updateRelations(oldBook, book);
-        return getOptional(book.getId())
+        return getById(book.getId())
                 .orElseThrow(
                         () -> new ObjectNotFound(
                                 String.format("The book with id '%s' was found", book.getId())));
@@ -79,35 +79,37 @@ public class BookDaoJdbc implements BookDao {
     }
 
     private void updateBookAuthorsRelations(Book oldBook, Book book) {
-        List<Long> newAuthorIds = book.getAuthors().stream()
+        List<Long> authorIds = book.getAuthors().stream()
                 .map(this::resolveAuthorId)
                 .collect(Collectors.toList());
         List<Long> oldAuthorIds = oldBook.getAuthors().stream()
                 .map(Author::getId)
                 .collect(Collectors.toList());
         List<Long> detachAuthorIds = oldAuthorIds.stream()
-                .filter(id -> !newAuthorIds.contains(id))
+                .filter(id -> !authorIds.contains(id))
                 .collect(Collectors.toList());
         detachAuthors(oldBook.getId(), detachAuthorIds);
-        newAuthorIds.stream()
+        Set<Long> newAuthorIds = authorIds.stream()
                 .filter(id -> !oldAuthorIds.contains(id))
-                .forEach(id -> relateAuthor(book.getId(), id));
+                .collect(Collectors.toSet());
+        relateAuthor(Map.of(book.getId(), newAuthorIds));
     }
 
     private void updateBookGenresRelations(Book oldBook, Book book) {
-        List<Long> newGenreIds = book.getGenres().stream()
+        List<Long> genreIds = book.getGenres().stream()
                 .map(this::resolveGenreId)
                 .collect(Collectors.toList());
         List<Long> oldGenreIds = oldBook.getGenres().stream()
                 .map(Genre::getId)
                 .collect(Collectors.toList());
         List<Long> detachGenreIds = oldGenreIds.stream()
-                .filter(id -> !newGenreIds.contains(id))
+                .filter(id -> !genreIds.contains(id))
                 .collect(Collectors.toList());
         detachGenres(oldBook.getId(), detachGenreIds);
-        newGenreIds.stream()
+        Set<Long> newGenreIds = genreIds.stream()
                 .filter(id -> !oldGenreIds.contains(id))
-                .forEach(id -> relateGenre(book.getId(), id));
+                .collect(Collectors.toSet());
+        relateGenre(Map.of(book.getId(), newGenreIds));
     }
 
     @Override
@@ -126,8 +128,8 @@ public class BookDaoJdbc implements BookDao {
     }
 
     @Override
-    public List<Book> findByTitle(String name) {
-        return findBooksByName(name);
+    public List<Book> findByTitle(String title) {
+        return findBooksByName(title);
     }
 
     private void createRelations(Book book) {
@@ -136,10 +138,11 @@ public class BookDaoJdbc implements BookDao {
     }
 
     private void createBookAuthorsRelations(Book book) {
-        book.getAuthors()
+        Set<Long> authorIds = book.getAuthors()
                 .stream()
                 .map(this::resolveAuthorId)
-                .forEach(authorId -> relateAuthor(book.getId(), authorId));
+                .collect(Collectors.toSet());
+        relateAuthor(Map.of(book.getId(), authorIds));
     }
 
     private Long resolveAuthorId(Author a) {
@@ -153,10 +156,11 @@ public class BookDaoJdbc implements BookDao {
     }
 
     private void createBookGenresRelations(Book book) {
-        book.getGenres()
+        Set<Long> genreIds = book.getGenres()
                 .stream()
                 .map(this::resolveGenreId)
-                .forEach(genreId -> relateGenre(book.getId(), genreId));
+                .collect(Collectors.toSet());
+        relateGenre(Map.of(book.getId(), genreIds));
     }
 
     private Long resolveGenreId(Genre g) {
@@ -169,20 +173,30 @@ public class BookDaoJdbc implements BookDao {
                                 String.format("The genre '%s' must be existed before the book", g.getName()))));
     }
 
-    private void relateAuthor(Long bookId, Long authorId) {
-        jdbc.update(
-                "INSERT INTO BOOKS_AUTHORS_RELATIONS(BOOK_ID, AUTHOR_ID) VALUES(:bookId, :authorId)",
-                new MapSqlParameterSource()
-                        .addValue("bookId", bookId)
-                        .addValue("authorId", authorId));
+    private void relateAuthor(Map<Long, Set<Long>> bookAuthorsMap) {
+        MapSqlParameterSource[] params = bookAuthorsMap.entrySet()
+                .stream()
+                .flatMap(e -> e.getValue()
+                        .stream()
+                        .map(authorId ->
+                                new MapSqlParameterSource()
+                                        .addValue("bookId", e.getKey())
+                                        .addValue("authorId", authorId)))
+                .toArray(MapSqlParameterSource[]::new);
+        jdbc.batchUpdate("INSERT INTO BOOKS_AUTHORS_RELATIONS(BOOK_ID, AUTHOR_ID) VALUES(:bookId, :authorId)", params);
     }
 
-    private void relateGenre(Long bookId, Long genreId) {
-        jdbc.update(
-                "INSERT INTO BOOKS_GENRES_RELATIONS(BOOK_ID, GENRE_ID) VALUES(:bookId, :genreId)",
-                new MapSqlParameterSource()
-                        .addValue("bookId", bookId)
-                        .addValue("genreId", genreId));
+    private void relateGenre(Map<Long, Set<Long>> bookGenresMap) {
+        MapSqlParameterSource[] params = bookGenresMap.entrySet()
+                .stream()
+                .flatMap(e -> e.getValue()
+                        .stream()
+                        .map(genreId ->
+                                new MapSqlParameterSource()
+                                        .addValue("bookId", e.getKey())
+                                        .addValue("genreId", genreId)))
+                .toArray(MapSqlParameterSource[]::new);
+        jdbc.batchUpdate("INSERT INTO BOOKS_GENRES_RELATIONS(BOOK_ID, GENRE_ID) VALUES(:bookId, :genreId)", params);
     }
 
     @Override

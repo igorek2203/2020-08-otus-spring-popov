@@ -35,7 +35,7 @@ class AuthorDaoJdbcTest {
     @DisplayName("Вычитает из БД автора по идентификатору")
     @Test
     void get() {
-        assertThat(authorDao.getOptional(1L)).get()
+        assertThat(authorDao.getById(1L)).get()
                 .extracting(Author::getFullName)
                 .isEqualTo("Автор 1");
     }
@@ -43,7 +43,7 @@ class AuthorDaoJdbcTest {
     @DisplayName("Переименует автора")
     @Test
     void update() {
-        Author author = authorDao.getOptional(1L).get();
+        Author author = authorDao.getById(1L).get();
         author.setFullName("Test update");
         assertThat(authorDao.update(author))
                 .extracting(Author::getFullName)

@@ -11,7 +11,7 @@ public interface BookDao {
 
     Book create(@NotNull Book book);
 
-    Optional<Book> getOptional(long id);
+    Optional<Book> getById(long id);
 
     Book update(@NotNull Book book);
 
