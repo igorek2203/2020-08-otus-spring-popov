@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import ru.ilpopov.otus.simple.library.dao.CommentDao;
+import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.domain.Comment;
 import ru.ilpopov.otus.simple.library.service.CommentService;
 
@@ -33,8 +34,9 @@ class CommentServiceImplTest {
     @DisplayName("получит коментарий по идентификатору")
     @Test
     void getById() {
+        Book book = new Book(1L, "test");
         given(commentDao.getById(any(Long.class)))
-                .willReturn(Optional.of(new Comment(1L, "test get")));
+                .willReturn(Optional.of(new Comment(book, "test get")));
 
         assertThat(commentService.getById(1L))
                 .isNotEmpty()
@@ -47,11 +49,12 @@ class CommentServiceImplTest {
     @DisplayName("добавит коментарий к книге")
     @Test
     void create() {
+        Book book = new Book(1L, "test");
         given(commentDao.create(any(Comment.class)))
-                .willReturn(new Comment(1L, "test create"));
+                .willReturn(new Comment(book, "test create"));
 
-        assertThat(commentService.create(new Comment(1L, "test create")))
-                .matches(c -> c.getBookId() == 1L)
+        assertThat(commentService.create(new Comment(book, "test create")))
+                .matches(c -> c.getBook().getId() == 1L)
                 .matches(c -> "test create".equalsIgnoreCase(c.getText()));
 
         verify(commentDao, only()).create(any(Comment.class));
@@ -60,14 +63,15 @@ class CommentServiceImplTest {
     @DisplayName("изменит коментарий")
     @Test
     void update() {
-        Comment comment = new Comment(1L, "test update");
+        Book book = new Book(1L, "test");
+        Comment comment = new Comment(book, "test update");
         comment.setId(1L);
 
         given(commentDao.update(any(Comment.class)))
                 .willReturn(comment);
 
         assertThat(commentService.update(comment))
-                .matches(c -> c.getBookId() == 1L)
+                .matches(c -> c.getBook().getId() == 1L)
                 .matches(c -> "test update".equalsIgnoreCase(c.getText()));
 
         verify(commentDao, only()).update(any(Comment.class));
@@ -84,7 +88,8 @@ class CommentServiceImplTest {
     @DisplayName("найдет комментарии по части его текста")
     @Test
     void findByComment() {
-        Comment comment = new Comment(1L, "test");
+        Book book = new Book(1L, "test");
+        Comment comment = new Comment(book, "test");
         comment.setId(1L);
 
         given(commentDao.findByComment("test"))
@@ -101,7 +106,8 @@ class CommentServiceImplTest {
     @DisplayName("найдет коментарий по идентификатору книги")
     @Test
     void findByBookId() {
-        Comment comment = new Comment(1L, "test");
+        Book book = new Book(1L, "test");
+        Comment comment = new Comment(book, "test");
         comment.setId(1L);
 
         given(commentDao.findByBookId(1L))

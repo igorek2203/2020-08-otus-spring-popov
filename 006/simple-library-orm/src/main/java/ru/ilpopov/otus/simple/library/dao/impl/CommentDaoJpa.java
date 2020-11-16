@@ -2,15 +2,17 @@ package ru.ilpopov.otus.simple.library.dao.impl;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import ru.ilpopov.otus.simple.library.dao.BookDao;
 import ru.ilpopov.otus.simple.library.dao.CommentDao;
+import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.domain.Comment;
+import ru.ilpopov.otus.simple.library.exception.ObjectNotFound;
 
 @RequiredArgsConstructor
 @Repository
@@ -19,8 +21,11 @@ public class CommentDaoJpa implements CommentDao {
     @PersistenceContext
     private final EntityManager em;
 
+    private final BookDao bookDao;
+
     @Override
     public Comment create(Comment comment) {
+        resolveBookId(comment);
         em.persist(comment);
         return comment;
     }
@@ -52,9 +57,22 @@ public class CommentDaoJpa implements CommentDao {
 
     @Override
     public List<Comment> findByBookId(Long... bookId) {
-        TypedQuery<Comment> query = em.createQuery("select c from Comment c where c.bookId in (:bookId)",
+        TypedQuery<Comment> query = em.createQuery("select c from Comment c join c.book b where b.id in (:bookId)",
                 Comment.class);
         query.setParameter("bookId", List.of(bookId));
         return query.getResultList();
+    }
+
+    private void resolveBookId(Comment comment) {
+        Optional.of(comment.getBook())
+                .filter(b -> b.getId() == null)
+                .ifPresent(book -> comment.setBook(findBookByName(book.getTitle())));
+    }
+
+    private Book findBookByName(String bookTitle) {
+        return bookDao.findByTitle(bookTitle)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new ObjectNotFound(String.format("The book '%s' does not exists", bookTitle)));
     }
 }

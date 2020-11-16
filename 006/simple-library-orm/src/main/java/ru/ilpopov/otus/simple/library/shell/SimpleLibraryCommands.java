@@ -10,6 +10,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import ru.ilpopov.otus.simple.library.domain.Author;
+import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.domain.Comment;
 import ru.ilpopov.otus.simple.library.domain.Genre;
 import ru.ilpopov.otus.simple.library.dto.BookDto;
@@ -117,9 +118,9 @@ public class SimpleLibraryCommands {
 
     @ShellMethod(value = "Add a new comment for a book", key = {"book-add-comment"})
     public void bookAddComment(
-            @ShellOption(value = "--bookId", help = "A book identifier") long bookId,
+            @ShellOption(value = "--book", help = "A book title") String bookTitle,
             @ShellOption(value = "--text", help = "Some comment") String commentText) {
-        commentService.create(new Comment(bookId, commentText));
+        commentService.create(new Comment(new Book(bookTitle), commentText));
     }
 
     @ShellMethod(value = "Remove a comment", key = {"book-remove-comment"})

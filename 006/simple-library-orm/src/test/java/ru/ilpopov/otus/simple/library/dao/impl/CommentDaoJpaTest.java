@@ -3,6 +3,7 @@ package ru.ilpopov.otus.simple.library.dao.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hibernate.SessionFactory;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,16 +11,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
+import ru.ilpopov.otus.simple.library.dao.BookDao;
 import ru.ilpopov.otus.simple.library.dao.CommentDao;
+import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.domain.Comment;
 
 @DisplayName("Тестирование DAO слоя по работе с коментариями")
 @DataJpaTest
-@Import({CommentDaoJpa.class})
+@Import({CommentDaoJpa.class, BookDaoJpa.class, AuthorDaoJpa.class, GenreDaoJpa.class})
 class CommentDaoJpaTest {
 
     @Autowired
     private CommentDao commentDao;
+
+    @Autowired
+    private BookDao bookDao;
 
     @Autowired
     private TestEntityManager em;
@@ -27,28 +33,37 @@ class CommentDaoJpaTest {
     @DisplayName("добавит коментарий к книге")
     @Test
     void createCommentSuccess() {
-        assertThat(commentDao.create(new Comment(5L, "test create")))
+        var book = em.find(Book.class, 5L);
+        assertThat(commentDao.create(new Comment(book, "test create")))
                 .matches(c -> c.getId() != null)
-                .matches(c -> c.getBookId() == 5L)
+                .matches(c -> c.getBook().getId() == 5L)
                 .matches(c -> c.getText().equalsIgnoreCase("test create"));
     }
 
     @DisplayName("исключение при добавлении коментария без текста")
     @Test
     void createCommentException() {
-        assertThatThrownBy(() -> commentDao.create(new Comment(5L, null)))
+        var book = em.find(Book.class, 5L);
+        assertThatThrownBy(() -> commentDao.create(new Comment(book, null)))
                 .hasCauseInstanceOf(ConstraintViolationException.class);
     }
 
     @DisplayName("получит коментарий по идентификатору")
     @Test
     void getById() {
+        SessionFactory sessionFactory = em.getEntityManager().getEntityManagerFactory()
+                .unwrap(SessionFactory.class);
+        sessionFactory.getStatistics().setStatisticsEnabled(true);
+
         assertThat(commentDao.getById(1L))
                 .isNotEmpty()
                 .get()
                 .matches(c -> c.getId() == 1L)
-                .matches(c -> c.getBookId() == 1L)
+                .matches(c -> c.getBook().getId() == 1L)
                 .matches(c -> c.getText().equalsIgnoreCase("1 комментарий к книге 1"));
+
+        assertThat(sessionFactory.getStatistics().getPrepareStatementCount())
+                .isEqualTo(1);
     }
 
     @DisplayName("получит пустой Optional по идентификатору")
@@ -70,10 +85,11 @@ class CommentDaoJpaTest {
     @DisplayName("изменит книгу к которой относится коментарий")
     @Test
     void updateCommentBookId() {
+        var book = em.find(Book.class, 2L);
         var comment = em.find(Comment.class, 1L);
-        comment.setBookId(2L);
+        comment.setBook(book);
         assertThat(commentDao.update(comment))
-                .matches(c -> c.getBookId() == 2L);
+                .matches(c -> c.getBook().getId() == 2L);
     }
 
     @DisplayName("удалит коментарий к книге")

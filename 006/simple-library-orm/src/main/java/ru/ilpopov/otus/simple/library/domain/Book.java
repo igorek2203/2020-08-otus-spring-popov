@@ -17,7 +17,6 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import ru.ilpopov.otus.simple.library.domain.validation.Create;
@@ -42,22 +41,20 @@ public class Book {
     private String description;
 
     @Fetch(FetchMode.SUBSELECT)
-    @BatchSize(size = 5)
     @ManyToMany(targetEntity = Author.class, fetch = FetchType.LAZY,
             cascade = {CascadeType.REFRESH})
     @JoinTable(name = "books_authors_relations",
             joinColumns = @JoinColumn(name = "book_id"),
             inverseJoinColumns = @JoinColumn(name = "author_id"))
-    private final Set<Author> authors = Sets.newHashSet();
+    private Set<Author> authors = Sets.newHashSet();
 
     @Fetch(FetchMode.SUBSELECT)
-    @BatchSize(size = 5)
     @ManyToMany(targetEntity = Genre.class, fetch = FetchType.LAZY,
             cascade = {CascadeType.REFRESH})
     @JoinTable(name = "books_genres_relations",
             joinColumns = @JoinColumn(name = "book_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id"))
-    private final Set<Genre> genres = Sets.newHashSet();
+    private Set<Genre> genres = Sets.newHashSet();
 
     public Book(Long id, String title, String description) {
         this.id = id;

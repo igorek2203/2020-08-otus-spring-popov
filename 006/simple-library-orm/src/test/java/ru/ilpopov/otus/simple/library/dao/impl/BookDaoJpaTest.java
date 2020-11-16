@@ -48,7 +48,7 @@ class BookDaoJpaTest {
 
         assertThatThrownBy(() -> bookDao.create(newBook))
                 .isInstanceOf(BookCreationException.class)
-                .hasMessage("The author 'NotExisted' must be existed before the book");
+                .hasMessage("The author 'NotExisted' does not exists");
     }
 
     @DisplayName("Исключение при создании книги с жанром, который еще не создан")
@@ -59,7 +59,7 @@ class BookDaoJpaTest {
 
         assertThatThrownBy(() -> bookDao.create(newBook))
                 .isInstanceOf(BookCreationException.class)
-                .hasMessage("The genre 'NotExisted' must be existed before the book");
+                .hasMessage("The genre 'NotExisted' does not exists");
     }
 
     @DisplayName("Создаст книгу с 2 авторами и 2 жанрами и вернет ее")

@@ -92,7 +92,7 @@ public class BookServiceImpl implements BookService {
         Map<Long, List<Comment>> bookCommentsMap = commentService.findByBookId(bookIds)
                 .stream()
                 .collect(groupingBy(
-                        Comment::getBookId,
+                        c -> c.getBook().getId(),
                         mapping(Function.identity(), toList())));
         books.forEach(b ->
                 b.getComments()
@@ -223,22 +223,22 @@ public class BookServiceImpl implements BookService {
         if (!Strings.isNullOrEmpty(bookTitle)) {
             bookDao.findByTitle(bookTitle)
                     .stream()
-                    .filter(b -> !books.contains(b))
                     .map(BookDto::new)
+                    .filter(b -> !books.contains(b))
                     .forEach(books::add);
         }
         if (!Strings.isNullOrEmpty(authorFullName)) {
             bookDao.findByAuthorFullName(authorFullName)
                     .stream()
-                    .filter(b -> !books.contains(b))
                     .map(BookDto::new)
+                    .filter(b -> !books.contains(b))
                     .forEach(books::add);
         }
         if (!Strings.isNullOrEmpty(genreName)) {
             bookDao.findByGenreName(genreName)
                     .stream()
-                    .filter(b -> !books.contains(b))
                     .map(BookDto::new)
+                    .filter(b -> !books.contains(b))
                     .forEach(books::add);
         }
         if (withComments) {

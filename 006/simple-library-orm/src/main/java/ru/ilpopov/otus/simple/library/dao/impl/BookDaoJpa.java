@@ -2,6 +2,8 @@ package ru.ilpopov.otus.simple.library.dao.impl;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -84,34 +86,33 @@ public class BookDaoJpa implements BookDao {
     }
 
     private void resolveIds(Book book) {
-        book.getAuthors()
+        Set<Author> authors = book.getAuthors()
                 .stream()
-                .filter(a -> a.getId() == null)
-                .forEach(a -> a.setId(resolveAuthorId(a)));
-        book.getGenres()
+                .map(a -> a.getId() != null ? a : findAuthorByName(a.getFullName()))
+                .collect(Collectors.toSet());
+
+        Set<Genre> genres = book.getGenres()
                 .stream()
-                .filter(g -> g.getId() == null)
-                .forEach(g -> g.setId(resolveGenreId(g)));
+                .map(g -> g.getId() != null ? g : findGenreByName(g.getName()))
+                .collect(Collectors.toSet());
+
+        book.setAuthors(authors);
+        book.setGenres(genres);
     }
 
-    private Long resolveAuthorId(Author author) {
-        return Optional.ofNullable(author.getId())
-                .orElseGet(() -> authorDao.findByFullName(author.getFullName())
-                        .stream()
-                        .mapToLong(Author::getId)
-                        .findFirst()
-                        .orElseThrow(() -> new BookCreationException(
-                                String.format("The author '%s' must be existed before the book",
-                                        author.getFullName()))));
+    private Author findAuthorByName(String fullName) {
+        return authorDao.findByFullName(fullName)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new BookCreationException(
+                        String.format("The author '%s' does not exists", fullName)));
     }
 
-    private Long resolveGenreId(Genre genre) {
-        return Optional.ofNullable(genre.getId())
-                .orElseGet(() -> genreDao.findByName(genre.getName())
-                        .stream()
-                        .mapToLong(Genre::getId)
-                        .findFirst()
-                        .orElseThrow(() -> new BookCreationException(
-                                String.format("The genre '%s' must be existed before the book", genre.getName()))));
+    private Genre findGenreByName(String name) {
+        return genreDao.findByName(name)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new BookCreationException(
+                        String.format("The genre '%s' does not exists", name)));
     }
 }
