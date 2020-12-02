@@ -1,0 +1,13 @@
+spring:
+  data:
+    mongodb:
+      port: 0
+      database: simple-library-db
+
+mongock:
+  change-logs-scan-package:
+    - ru.ilpopov.otus.simple.library.mongock.testChangelog
+
+logging:
+  level:
+    root: DEBUG
