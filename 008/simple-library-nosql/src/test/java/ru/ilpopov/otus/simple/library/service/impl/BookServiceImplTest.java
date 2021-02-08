@@ -21,9 +21,9 @@ import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigura
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import ru.ilpopov.otus.simple.library.dao.BookDao;
 import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.dto.BookDto;
+import ru.ilpopov.otus.simple.library.repository.BookRepository;
 import ru.ilpopov.otus.simple.library.service.BookService;
 import ru.ilpopov.otus.simple.library.service.CommentService;
 
@@ -36,20 +36,20 @@ class BookServiceImplTest {
     private BookService service;
 
     @MockBean
-    private BookDao dao;
+    private BookRepository repository;
 
     @MockBean
     private CommentService commentService;
 
     @BeforeEach
     public void beforeEach() {
-        given(dao.save(any(Book.class)))
+        given(repository.save(any(Book.class)))
                 .will((invocationOnMock) -> {
                     Book input = invocationOnMock.getArgument(0);
                     return new Book("1L", input.getTitle(), input.getDescription());
                 });
 
-        given(dao.save(any(Book.class)))
+        given(repository.save(any(Book.class)))
                 .will((invocationOnMock) -> {
                     Book input = invocationOnMock.getArgument(0);
                     return new Book("1L", input.getTitle(), input.getDescription());
@@ -65,7 +65,7 @@ class BookServiceImplTest {
                 .isEqualTo("Test create");
 
         ArgumentCaptor<Book> bookArgumentCaptor = ArgumentCaptor.forClass(Book.class);
-        verify(dao, only()).save(bookArgumentCaptor.capture());
+        verify(repository, only()).save(bookArgumentCaptor.capture());
 
         assertThat(bookArgumentCaptor.getValue())
                 .isEqualTo(book.toBook());
@@ -79,13 +79,13 @@ class BookServiceImplTest {
         assertThatThrownBy(() -> service.create(book))
                 .isInstanceOf(ConstraintViolationException.class)
                 .hasMessage("create.book.title: name must be set");
-        verify(dao, never()).save(book.toBook());
+        verify(repository, never()).save(book.toBook());
     }
 
     @DisplayName("Вернет одну книгу по заданному идентификатору")
     @Test
     void getByIdSuccess() {
-        given(dao.findById("1L"))
+        given(repository.findById("1L"))
                 .willReturn(Optional.of(new Book("1L", "Test get", null)));
 
         assertThat(service.getById("1L"))
@@ -94,7 +94,7 @@ class BookServiceImplTest {
                 .extracting(BookDto::getTitle)
                 .isEqualTo("Test get");
 
-        verify(dao, only()).findById("1L");
+        verify(repository, only()).findById("1L");
     }
 
     @DisplayName("Вернет пустой Optional т.к. книга с заданным идентификатором не создана")
@@ -103,7 +103,7 @@ class BookServiceImplTest {
         assertThat(service.getById("1L"))
                 .isEmpty();
 
-        verify(dao, only()).findById("1L");
+        verify(repository, only()).findById("1L");
     }
 
     @DisplayName("Изменит книгу и вернет ее")
@@ -116,7 +116,7 @@ class BookServiceImplTest {
                 .extracting(BookDto::getTitle)
                 .isEqualTo("Test update");
 
-        verify(dao, only()).save(book.toBook());
+        verify(repository, only()).save(book.toBook());
     }
 
     @DisplayName("Исключение при попытке обновить книгу без ее идентификатора")
@@ -128,7 +128,7 @@ class BookServiceImplTest {
                 .isInstanceOf(ConstraintViolationException.class)
                 .hasMessage("update.book.id: id must be set");
 
-        verify(dao, never()).save(book.toBook());
+        verify(repository, never()).save(book.toBook());
     }
 
     @DisplayName("Удалит книгу")
@@ -136,13 +136,13 @@ class BookServiceImplTest {
     void delete() {
         service.deleteById("1L");
 
-        verify(dao, only()).deleteById("1L");
+        verify(repository, only()).deleteById("1L", true);
     }
 
     @DisplayName("Найдет книги по заданному имени")
     @Test
     void findByName() {
-        given(dao.findByTitleContaining(anyString()))
+        given(repository.findByTitleContaining(anyString()))
                 .will((invocationOnMock) -> {
                     String name = invocationOnMock.getArgument(0);
                     return List.of(new Book("1L", name, null),
@@ -154,13 +154,13 @@ class BookServiceImplTest {
                 .flatExtracting(BookDto::getTitle)
                 .containsOnly("test search");
 
-        verify(dao, only()).findByTitleContaining("test search");
+        verify(repository, only()).findByTitleContaining("test search");
     }
 
     @DisplayName("Найдет книги по имени автора")
     @Test
     void findByAuthorName() {
-        given(dao.findByAuthors_fullName(anyString()))
+        given(repository.findByAuthors_fullName(anyString()))
                 .will((invocationOnMock) -> {
                     String name = invocationOnMock.getArgument(0);
                     return List.of(new Book("1L", name, null),
@@ -172,13 +172,13 @@ class BookServiceImplTest {
                 .flatExtracting(BookDto::getTitle)
                 .containsOnly("test search");
 
-        verify(dao, only()).findByAuthors_fullName("test search");
+        verify(repository, only()).findByAuthors_fullName("test search");
     }
 
     @DisplayName("Найдет книги по названию жанра")
     @Test
     void findByGenreName() {
-        given(dao.findByGenres_name(anyString()))
+        given(repository.findByGenres_name(anyString()))
                 .will((invocationOnMock) -> {
                     String name = invocationOnMock.getArgument(0);
                     return List.of(new Book("1L", name, null),
@@ -190,6 +190,6 @@ class BookServiceImplTest {
                 .flatExtracting(BookDto::getTitle)
                 .containsOnly("test search");
 
-        verify(dao, only()).findByGenres_name("test search");
+        verify(repository, only()).findByGenres_name("test search");
     }
 }

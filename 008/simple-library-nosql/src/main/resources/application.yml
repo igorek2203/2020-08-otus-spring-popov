@@ -1,15 +1,15 @@
 spring:
   data:
     mongodb:
-      port: 0
-      #host: localhost
+      port: 27017
+      host: localhost
       database: simple-library-db
 
 mongock:
   #runner-type: "ApplicationRunner" # default
   runner-type: "InitializingBean"
   change-logs-scan-package:
-    - ru.ilpopov.otus.simple.library.mongock.changelog
+    - ru.ilpopov.otus.simple.library.mongock.ChangeLogSimpleLibrary
 
 logging:
   level:

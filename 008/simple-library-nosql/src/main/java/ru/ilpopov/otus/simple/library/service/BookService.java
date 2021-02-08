@@ -46,11 +46,10 @@ public interface BookService {
 
     BookDto addAuthorToBook(@NotNull String bookId, @Valid @NotNull Author author);
 
-    List<BookDto> findAllByTitleAndAuthorFullNameAndGenreName(@NotNull String bookTitle,
+    List<BookDto> findAllByTitleOrAuthorFullNameOrGenreName(@NotNull String bookTitle,
             @NotNull String authorFullName, @NotNull String genreName);
 
-    List<BookDto> findAllByTitleAndAuthorFullNameAndGenreName(@NotNull String bookTitle,
+    List<BookDto> findAllByTitleOrAuthorFullNameOrGenreName(@NotNull String bookTitle,
             @NotNull String authorFullName, @NotNull String genreName, boolean withComments);
 
-    BookDto updateBookField(@NotNull String bookId, @NotNull String fieldName, String fieldValue);
 }

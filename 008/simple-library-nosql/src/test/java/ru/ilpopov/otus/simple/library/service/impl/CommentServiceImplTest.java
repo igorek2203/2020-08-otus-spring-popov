@@ -16,7 +16,7 @@ import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigura
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import ru.ilpopov.otus.simple.library.dao.CommentDao;
+import ru.ilpopov.otus.simple.library.repository.CommentRepository;
 import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.domain.Comment;
 import ru.ilpopov.otus.simple.library.service.CommentService;
@@ -27,7 +27,7 @@ import ru.ilpopov.otus.simple.library.service.CommentService;
 class CommentServiceImplTest {
 
     @MockBean
-    private CommentDao commentDao;
+    private CommentRepository commentRepository;
 
     @Autowired
     private CommentService commentService;
@@ -36,7 +36,7 @@ class CommentServiceImplTest {
     @Test
     void getById() {
         Book book = new Book("1L", "test", null);
-        given(commentDao.findById(anyString()))
+        given(commentRepository.findById(anyString()))
                 .willReturn(Optional.of(new Comment(book, "test get")));
 
         assertThat(commentService.getById("1L"))
@@ -44,21 +44,21 @@ class CommentServiceImplTest {
                 .get()
                 .matches(c -> "test get".equalsIgnoreCase(c.getText()));
 
-        verify(commentDao, only()).findById("1L");
+        verify(commentRepository, only()).findById("1L");
     }
 
     @DisplayName("добавит коментарий к книге")
     @Test
     void create() {
         Book book = new Book("1L", "test", null);
-        given(commentDao.save(any(Comment.class)))
+        given(commentRepository.save(any(Comment.class)))
                 .willReturn(new Comment(book, "test create"));
 
         assertThat(commentService.create(new Comment(book, "test create")))
                 .matches(c -> c.getBook().getId().equalsIgnoreCase("1L"))
                 .matches(c -> "test create".equalsIgnoreCase(c.getText()));
 
-        verify(commentDao, only()).save(any(Comment.class));
+        verify(commentRepository, only()).save(any(Comment.class));
     }
 
     @DisplayName("изменит коментарий")
@@ -68,14 +68,14 @@ class CommentServiceImplTest {
         Comment comment = new Comment(book, "test update");
         comment.setId("1L");
 
-        given(commentDao.save(any(Comment.class)))
+        given(commentRepository.save(any(Comment.class)))
                 .willReturn(comment);
 
         assertThat(commentService.update(comment))
                 .matches(c -> c.getBook().getId().equalsIgnoreCase("1L"))
                 .matches(c -> "test update".equalsIgnoreCase(c.getText()));
 
-        verify(commentDao, only()).save(any(Comment.class));
+        verify(commentRepository, only()).save(any(Comment.class));
     }
 
     @DisplayName("удалит комментарий")
@@ -83,7 +83,7 @@ class CommentServiceImplTest {
     void deleteById() {
         commentService.deleteById("1L");
 
-        verify(commentDao, only()).deleteById("1L");
+        verify(commentRepository, only()).deleteById("1L");
     }
 
     @DisplayName("найдет комментарии по части его текста")
@@ -93,7 +93,7 @@ class CommentServiceImplTest {
         Comment comment = new Comment(book, "test");
         comment.setId("1L");
 
-        given(commentDao.findByTextContaining("test"))
+        given(commentRepository.findByTextContaining("test"))
                 .willReturn(List.of(comment));
 
         assertThat(commentService.findByComment("test"))
@@ -101,7 +101,7 @@ class CommentServiceImplTest {
                 .flatExtracting(Comment::getText)
                 .containsOnlyOnce("test");
 
-        verify(commentDao, only()).findByTextContaining("test");
+        verify(commentRepository, only()).findByTextContaining("test");
     }
 
     @DisplayName("найдет коментарий по идентификатору книги")
@@ -111,7 +111,7 @@ class CommentServiceImplTest {
         Comment comment = new Comment(book, "test");
         comment.setId("1L");
 
-        given(commentDao.findByBookIn(List.of("1L")))
+        given(commentRepository.findByBookIn(List.of("1L")))
                 .willReturn(List.of(comment));
 
         assertThat(commentService.findByBookId(List.of("1L")))
@@ -119,6 +119,6 @@ class CommentServiceImplTest {
                 .flatExtracting(Comment::getText)
                 .containsOnlyOnce("test");
 
-        verify(commentDao, only()).findByBookIn(List.of("1L"));
+        verify(commentRepository, only()).findByBookIn(List.of("1L"));
     }
 }

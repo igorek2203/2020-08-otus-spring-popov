@@ -4,15 +4,15 @@ import com.github.cloudyrock.mongock.ChangeLog;
 import com.github.cloudyrock.mongock.ChangeSet;
 import com.mongodb.client.MongoDatabase;
 import java.util.List;
-import ru.ilpopov.otus.simple.library.dao.BookDao;
-import ru.ilpopov.otus.simple.library.dao.CommentDao;
+import ru.ilpopov.otus.simple.library.repository.BookRepository;
+import ru.ilpopov.otus.simple.library.repository.CommentRepository;
 import ru.ilpopov.otus.simple.library.domain.Author;
 import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.domain.Comment;
 import ru.ilpopov.otus.simple.library.domain.Genre;
 
 @ChangeLog
-public class changelog {
+public class ChangeLogSimpleLibrary {
 
     private final Author tolsoy = new Author("Лев Николаевич Толстой",
             "Глава русской литературы, просветитель, публицист, "
@@ -36,7 +36,7 @@ public class changelog {
     }
 
     @ChangeSet(order = "002", id = "insertBookWolfAndSevenGoatlings", author = "ipopov")
-    public void insertBookWolfAndSevenGoatlings(BookDao repository) {
+    public void insertBookWolfAndSevenGoatlings(BookRepository repository) {
         Book book = new Book("Волк и семеро козлят",
                 "Детская сказка, повествующая о том как вол обманом пытался съесть козлят");
         book.setGenres(List.of(childTails));
@@ -45,7 +45,7 @@ public class changelog {
     }
 
     @ChangeSet(order = "003", id = "insertBookWarAndPeaceFirst", author = "ipopov")
-    public void insertBookWarAndPeaceFirst(BookDao repository) {
+    public void insertBookWarAndPeaceFirst(BookRepository repository) {
         Book book = new Book("Война и мир (Том 1)",
                 "В книгу входит первый том романа-эпопеи «Война и мир». Для старшего школьного возраста.");
         book.setGenres(List.of(russianClassic, literatureXVIIICenture));
@@ -54,7 +54,7 @@ public class changelog {
     }
 
     @ChangeSet(order = "004", id = "insertBookWarAndPeaceSecond", author = "ipopov")
-    public void insertBookWarAndPeaceSecond(BookDao repository) {
+    public void insertBookWarAndPeaceSecond(BookRepository repository) {
         Book book = new Book("Война и мир (Том 2)",
                 "В книгу входит второй том романа-эпопеи «Война и мир». Для старшего школьного возраста.");
         book.setGenres(List.of(russianClassic, literatureXVIIICenture));
@@ -63,7 +63,7 @@ public class changelog {
     }
 
     @ChangeSet(order = "005", id = "insertBookWarAndPeaceThird", author = "ipopov")
-    public void insertBookWarAndPeaceThird(BookDao repository) {
+    public void insertBookWarAndPeaceThird(BookRepository repository) {
         Book book = new Book("Война и мир (Том 3)",
                 "В книгу входит третий том романа-эпопеи «Война и мир». Для старшего школьного возраста.");
         book.setGenres(List.of(russianClassic, literatureXVIIICenture));
@@ -72,7 +72,7 @@ public class changelog {
     }
 
     @ChangeSet(order = "006", id = "insertBookWarAndPeaceFourth", author = "ipopov")
-    public void insertBookWarAndPeaceFourth(BookDao repository) {
+    public void insertBookWarAndPeaceFourth(BookRepository repository) {
         Book book = new Book("Война и мир (Том 4)",
                 "В книгу входит четвертый том романа-эпопеи «Война и мир». Для старшего школьного возраста.");
         book.setGenres(List.of(russianClassic, literatureXVIIICenture));
@@ -81,7 +81,7 @@ public class changelog {
     }
 
     @ChangeSet(order = "007", id = "insertBookChapaevAndEmptiness", author = "ipopov")
-    public void insertBookChapaevAndEmptiness(BookDao repository) {
+    public void insertBookChapaevAndEmptiness(BookRepository repository) {
         Book book = new Book("Чапаев и пустота",
                 "Роман «Чапаев и Пустота» сам автор характеризует так «Это первое произведение в мировой "
                         + "литературе, действие которого происходит в абсолютной пустоте». На самом деле оно "
@@ -96,8 +96,8 @@ public class changelog {
     }
 
     @ChangeSet(order = "008", id = "insertCommentForBookChapaevAndEmptiness", author = "ipopov")
-    public void insertCommentForBookChapaevAndEmptiness(CommentDao repository, BookDao bookDao) {
-        Book book = bookDao.findByTitleContaining("Чапаев и пустота")
+    public void insertCommentForBookChapaevAndEmptiness(CommentRepository repository, BookRepository bookRepository) {
+        Book book = bookRepository.findByTitleContaining("Чапаев и пустота")
                 .stream()
                 .findFirst()
                 .orElse(null);

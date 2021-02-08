@@ -1,4 +1,4 @@
-package ru.ilpopov.otus.simple.library.dao;
+package ru.ilpopov.otus.simple.library.repository;
 
 import java.util.List;
 import javax.validation.constraints.NotNull;
@@ -9,10 +9,11 @@ import ru.ilpopov.otus.simple.library.domain.Comment;
 
 @Validated
 @Repository
-public interface CommentDao extends MongoRepository<Comment, String> {
+public interface CommentRepository extends MongoRepository<Comment, String> {
 
     List<Comment> findByTextContaining(@NotNull String text);
 
     List<Comment> findByBookIn(@NotNull List<String> ids);
 
+    void deleteAllByBook(@NotNull String bookId);
 }

@@ -1,4 +1,4 @@
-package ru.ilpopov.otus.simple.library.dao;
+package ru.ilpopov.otus.simple.library.repository;
 
 import java.util.List;
 import javax.validation.constraints.NotNull;
@@ -9,7 +9,7 @@ import ru.ilpopov.otus.simple.library.domain.Book;
 
 @Validated
 @Repository
-public interface BookDao extends MongoRepository<Book, String> {
+public interface BookRepository extends MongoRepository<Book, String>, BookCustomRepository {
 
     List<Book> findByTitleContaining(@NotNull String title);
 

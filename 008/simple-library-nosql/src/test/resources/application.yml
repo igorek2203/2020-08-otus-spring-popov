@@ -6,7 +6,7 @@ spring:
 
 mongock:
   change-logs-scan-package:
-    - ru.ilpopov.otus.simple.library.mongock.testChangelog
+    - ru.ilpopov.otus.simple.library.mongock.TestChangeLogSimpleLibrary
 
 logging:
   level:

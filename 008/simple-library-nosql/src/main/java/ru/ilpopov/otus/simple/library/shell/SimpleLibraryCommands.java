@@ -51,7 +51,7 @@ public class SimpleLibraryCommands {
             @ShellOption(value = "-A", defaultValue = "", help = "Author full name") String authorFullName,
             @ShellOption(value = "-G", defaultValue = "", help = "Genre name") String genreName,
             @ShellOption(value = "-C", defaultValue = "false", help = "Include comments") boolean withComments) {
-        List<BookDto> books = bookService.findAllByTitleAndAuthorFullNameAndGenreName(bookTitle,
+        List<BookDto> books = bookService.findAllByTitleOrAuthorFullNameOrGenreName(bookTitle,
                 authorFullName, genreName, withComments);
         books.forEach(b -> {
             stringIOService.writeln("----------------------------------");
@@ -65,11 +65,13 @@ public class SimpleLibraryCommands {
     @ShellMethod(value = "Modify the book", key = {"book-modify"})
     public void modifyBook(
             @ShellOption(value = "--id", help = "The book id") String bookId,
-            @ShellOption(value = "--field", help = "Field name") String fieldName,
-            @ShellOption(value = "--value", help = "New Value") String fieldValue) {
+            @ShellOption(value = "--title", help = "New title") String newTitle,
+            @ShellOption(value = "--description", help = "New description") String newDescr) {
+        var book = new BookDto(newTitle, newDescr);
+        book.setId(bookId);
         stringIOService.writeln("Book updated");
         stringIOService.writeln(bookFormatter.formatToString(
-                bookService.updateBookField(bookId, fieldName, fieldValue)));
+                bookService.update(book)));
     }
 
 

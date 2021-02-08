@@ -1,34 +1,30 @@
-package ru.ilpopov.otus.simple.library.dao.impl;
+package ru.ilpopov.otus.simple.library.repository.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.mongodb.DBRef;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.ConvertOperators.ToObjectId;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import ru.ilpopov.otus.simple.library.config.MongoConfig;
-import ru.ilpopov.otus.simple.library.dao.BookDao;
+import ru.ilpopov.otus.simple.library.repository.BookRepository;
 import ru.ilpopov.otus.simple.library.domain.Author;
 import ru.ilpopov.otus.simple.library.domain.Book;
 import ru.ilpopov.otus.simple.library.domain.Comment;
 import ru.ilpopov.otus.simple.library.domain.Genre;
-import ru.ilpopov.otus.simple.library.listener.CommentCascadeRemoveMongoEventListener;
 
 @DisplayName("Тестирование DAO слоя по работе с книгами")
 @DataMongoTest
-@Import(value = {MongoConfig.class, CommentCascadeRemoveMongoEventListener.class})
-class BookDaoTest {
+@Import(value = {MongoConfig.class})
+class BookRepositoryTest {
 
     @Autowired
-    private BookDao bookDao;
+    private BookRepository bookRepository;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -36,7 +32,7 @@ class BookDaoTest {
     @DisplayName("Найдет книги по имени и запросит связанных с ней авторов и жанры")
     @Test
     void findByTitle() {
-        List<Book> books = bookDao.findByTitleContaining("Книга");
+        List<Book> books = bookRepository.findByTitleContaining("Книга");
         assertThat(books)
                 .flatExtracting(Book::getTitle)
                 .containsOnly("Книга 1", "Книга 2", "Книга 3", "Книга 4");
@@ -55,7 +51,7 @@ class BookDaoTest {
     @DisplayName("Найдет книги по имени ее автора и не будет запрашивать авторов и жанры")
     @Test
     void findBookByAuthorFullNameWithoutRelatedEntities() {
-        List<Book> books = bookDao.findByAuthors_fullName("Автор 1");
+        List<Book> books = bookRepository.findByAuthors_fullName("Автор 1");
         assertThat(books)
                 .flatExtracting(Book::getTitle)
                 .containsOnly("Книга 1", "Книга 2", "Книга 3");
@@ -64,7 +60,7 @@ class BookDaoTest {
     @DisplayName("Найдет книги по названию жанра и запросит жанры найденых книг")
     @Test
     void findBooksByGenreNameWithGenreList() {
-        List<Book> books = bookDao.findByGenres_name("Жанр 1");
+        List<Book> books = bookRepository.findByGenres_name("Жанр 1");
         assertThat(books)
                 .flatExtracting(Book::getTitle)
                 .containsOnly("Книга 1", "Книга 2", "Книга 3");
@@ -79,8 +75,8 @@ class BookDaoTest {
     @DisplayName("Удалит книгу и связанные с ней комментарии")
     @Test
     void testBookDeleteById() {
-        Book book = bookDao.findByTitleContaining("Удалить по ID 1 с комментариями").stream().findFirst().orElseThrow();
-        bookDao.deleteById(book.getId());
+        Book book = bookRepository.findByTitleContaining("Удалить по ID 1 с комментариями").stream().findFirst().orElseThrow();
+        bookRepository.deleteById(book.getId(), true);
 
         Query query = new Query();
         query.addCriteria(Criteria.where("book").is(book.getId()));
@@ -92,8 +88,8 @@ class BookDaoTest {
     @DisplayName("Удалит книгу и связанные с ней комментарии")
     @Test
     void testBookDelete() {
-        Book book = bookDao.findByTitleContaining("Удалит с комментариями").stream().findFirst().orElseThrow();
-        bookDao.delete(book);
+        Book book = bookRepository.findByTitleContaining("Удалит с комментариями").stream().findFirst().orElseThrow();
+        bookRepository.delete(book, true);
 
         Query query = new Query();
         query.addCriteria(Criteria.where("book").is(book.getId()));
