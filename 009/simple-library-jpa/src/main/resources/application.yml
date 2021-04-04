@@ -1,0 +1,26 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:library_db
+    initialization-mode: always
+    schema: classpath:database/schema.sql
+    data: classpath:database/data.sql
+
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+
+    #show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+  #thymeleaf:
+  #  cache: false
+
+logging:
+  level:
+    ROOT: ERROR

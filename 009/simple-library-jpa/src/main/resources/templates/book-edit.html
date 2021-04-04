@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Edit book</title>
+  <style type="text/css">
+        body {
+            padding: 50px;
+        }
+
+        label {
+            display: inline-block;
+            width: 130px;
+        }
+
+        input:read-only {
+            background: lightgray;
+        }
+
+        .main-tbl-td {
+          padding-right: 10px;
+          vertical-align: top;
+        }
+
+        .input {
+          margin-bottom: 10px;
+        }
+
+        .container {
+          padding-top: 10px;
+          padding-left: 20px;
+        }
+
+        .button-container {
+          padding-top: 10px;
+          padding-bottom: 20px;
+        }
+
+
+  </style>
+</head>
+<body>
+
+<!-- Book edition -->
+<form id="edit-form" th:action="@{/books/{id}/actions/save(id=${book.id})}" action="edit.html" th:method="post">
+  <h1>Book Info:</h1>
+  <div>
+    <table class="main-tbl">
+      <caption><h1 th:text="${book.title}">Название книги:</h1></caption>
+      <input type="hidden" th:field="${book.id}"/>
+      <input type="hidden" th:field="${book.title}"/>
+      <tr>
+        <th>Авторы</th>
+        <th>Жанры</th>
+      </tr>
+      <tr>
+        <td class="main-tbl-td">
+          <div class="container" id="container-author-list"
+               th:data-input-id="'id-author-input-[{index}]'"
+               th:data-input-name="'authors[{index}].fullName'"
+               th:data-child-div-name="'container-author-[{index}]'">
+            <div th:id="container-author-__${itemStat.index}__" th:each="author, itemStat : ${book.authors}">
+              <input class="input" id="id-author-input" type="text"
+                     th:id="id-author-input-__${itemStat.index}__"
+                     th:field="${book.authors[__${itemStat.index}__].fullName}"
+                     th:data-object-id="${author.id}"/>
+              <button type="button"
+                      th:onclick="|removeChildFromContainer('container-author-list', 'container-author-__${itemStat.index}__')|">X
+              </button>
+            </div>
+          </div>
+        </td>
+        <td class="main-tbl-td">
+          <div class="container" id="container-genre-list"
+               th:data-input-id="'id-genre-input-[{index}]'"
+               th:data-input-name="'genres[{index}].name'"
+               th:data-child-div-name="'container-genre-[{index}]'">
+            <div th:id="container-genre-__${itemStat.index}__" th:each="genre, itemStat : ${book.genres}">
+              <input class="input" id="id-genre-input" type="text"
+                     th:id="id-genre-input-__${itemStat.index}__"
+                     th:field="${book.genres[__${itemStat.index}__].name}"
+                     th:data-object-id="${genre.id}"/>
+              <button type="button"
+                      th:onclick="|removeChildFromContainer('container-genre-list', 'container-genre-__${itemStat.index}__')|">X
+              </button>
+            </div>
+          </div>
+        </td>
+        <td class="main-tbl-td">
+          <div class="container">
+            <div>
+              <label for="id-authors-select">Добавить автора:</label>
+              <select class="cl-authors-select" id="id-authors-select">
+                <option disabled selected>Please select...</option>
+                <option th:each="author : ${authors}" th:value="${author.id}" th:text="${author.fullName}"></option>
+              </select>
+              <button type="button"
+                      th:onclick="addSelectedElement('container-author-list', 'id-authors-select')">Add
+              </button>
+            </div>
+            <div>
+              <label for="id-genres-select">Добавить жанр:</label>
+              <select class="cl-genres-select" id="id-genres-select">
+                <option disabled selected>Please select...</option>
+                <option th:each="genre : ${genres}" th:value="${genre.id}" th:text="${genre.name}"></option>
+              </select>
+              <button type="button"
+                      th:onclick="addSelectedElement('container-genre-list', 'id-genres-select')">Add
+              </button>
+            </div>
+            <div class="button-container">
+              <button type="button" th:onclick="'goToBookList()'">Back to list</button>
+              <button type="submit">Save</button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</form>
+
+<script type="text/javascript">
+  let BreakException = {};
+
+  function goToBookList() {
+    window.location.href = window.location.origin + "/books";
+  }
+
+  function addSelectedElement(targetContainerId, sourceSelectId) {
+    try {
+      let selectList = document.getElementById(sourceSelectId);
+      let selectedOption = selectList.options[selectList.selectedIndex];
+      objectId = selectedOption.value;
+      value = selectedOption.text;
+
+      if (!selectedOption.disabled) {
+        let targetContainer = document.getElementById(targetContainerId);
+        let children = Object.values(targetContainer.children);
+        if (targetContainer.querySelector(`div input[data-object-id="${objectId}"]`) != null) {
+          alert(`object "${value}" is already added`);
+          throw Error(`object ${value} is already added`);
+        }
+        targetContainer.appendChild(createChildForContainer(targetContainer, value, objectId));
+      }
+    } catch (ex) {
+      console.error(ex);
+    }
+  }
+
+  function createChildForContainer(targetContainer, value, objectId) {
+    let index = targetContainer.childElementCount;
+    let inputName = targetContainer.dataset.inputName;
+    let inputId = targetContainer.dataset.inputId;
+    let childDivName = targetContainer.dataset.childDivName;
+
+    let input = document.createElement("input");
+    input.className = "input";
+    input.id = inputId.replace("[{index}]", `${index}`);
+    input.type = "text";
+    input.dataset.objectId = objectId;
+    input.name = inputName.replace("[{index}]", `[${index}]`);
+    input.value = value;
+
+    let childDiv = document.createElement("div");
+    childDiv.id = childDivName.replace("[{index}]", `${index}`);
+
+    let removeInput = document.createElement("button");
+    removeInput.type = "button";
+    removeInput.innerHTML = "X";
+    removeInput.onclick = function() { removeChildFromContainer(targetContainer.id, childDiv.id); };
+
+    childDiv.appendChild(input);
+    childDiv.appendChild(removeInput);
+
+    return childDiv;
+  }
+
+  function removeChildFromContainer(targetContainerId, childId) {
+    console.log(`remove the element ${childId} from the container ${targetContainerId}`);
+    let parent = document.getElementById(targetContainerId);
+    let child = document.getElementById(childId);
+    parent.removeChild(child);
+  }
+
+
+</script>
+
+</body>
+</html>
